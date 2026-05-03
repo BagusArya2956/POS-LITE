@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+@layer base {
+  * {
+    @apply border-slate-200;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply min-h-screen bg-slate-100 text-slate-900 antialiased;
+    font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+    background-image:
+      radial-gradient(circle at top left, rgba(219, 234, 254, 0.7), transparent 24rem),
+      radial-gradient(circle at bottom right, rgba(226, 232, 240, 0.9), transparent 30rem);
+  }
+
+  button:disabled {
+    @apply cursor-not-allowed opacity-60;
+  }
+}
+
+@layer components {
+  .surface-card {
+    @apply rounded-[28px] border border-white/60 bg-white shadow-[0_16px_50px_rgba(15,23,42,0.08)];
+  }
+
+  .panel-card {
+    @apply rounded-3xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  .section-title {
+    @apply text-2xl font-bold tracking-tight text-slate-900;
+  }
+
+  .section-subtitle {
+    @apply text-sm text-slate-500;
+  }
+
+  .form-label {
+    @apply mb-2 block text-sm font-semibold text-slate-700;
+  }
+
+  .form-input {
+    @apply w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100;
+  }
+
+  .form-textarea {
+    @apply form-input min-h-[120px] resize-none;
+  }
+
+  .form-select {
+    @apply form-input appearance-none bg-[linear-gradient(45deg,transparent_50%,#64748b_50%),linear-gradient(135deg,#64748b_50%,transparent_50%)] bg-[length:10px_10px,10px_10px] bg-[position:calc(100%_-_22px)_calc(50%_-_2px),calc(100%_-_16px)_calc(50%_-_2px)] bg-no-repeat pr-12;
+  }
+
+  .soft-divider {
+    @apply border-t border-slate-200/90;
+  }
+
+  .pill-button {
+    @apply rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-700;
+  }
+
+  .pill-button-active {
+    @apply border-blue-600 bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)];
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
