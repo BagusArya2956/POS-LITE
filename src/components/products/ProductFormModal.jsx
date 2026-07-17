@@ -21,37 +21,37 @@ import { getQuantityStep } from '../../lib/quantity.js'
 const PRODUCT_TYPES = [
   {
     id: 'basic',
-    label: 'Barang biasa',
-    description: 'Untuk produk satuan tanpa pilihan varian.',
+    label: 'Standard Product',
+    description: 'For single products without variants.',
     icon: Package,
   },
   {
     id: 'variant',
-    label: 'Barang varian',
-    description: 'Untuk produk dengan ukuran, warna, atau model.',
+    label: 'Variant Product',
+    description: 'For products with sizes, colors, or models.',
     icon: Shirt,
   },
   {
     id: 'weighted',
-    label: 'Berat / volume',
-    description: 'Untuk produk yang dijual per kg, gram, liter, atau ml.',
+    label: 'Weight / Volume',
+    description: 'For products sold by kg, gram, liter, or ml.',
     icon: Boxes,
   },
   {
     id: 'package',
-    label: 'Paket',
-    description: 'Untuk bundling atau paket penjualan.',
+    label: 'Bundle',
+    description: 'For bundles or product packages.',
     icon: Package2,
   },
   {
     id: 'service',
-    label: 'Jasa tanpa stok',
-    description: 'Untuk layanan yang tidak memiliki stok fisik.',
+    label: 'Service without inventory',
+    description: 'For services without physical inventory.',
     icon: Wrench,
   },
 ]
 
-function createEmptyVariant() {
+function createEmptyVariant(defaultMinimumStock = 0) {
   return {
     id: '',
     name: '',
@@ -60,30 +60,30 @@ function createEmptyVariant() {
     sellPrice: 0,
     costPrice: 0,
     stock: 0,
-    minimumStock: 0,
+    minimumStock: defaultMinimumStock,
   }
 }
 
-function mapProductToForm(product, productVariants) {
+function mapProductToForm(product, productVariants, inventoryPreferences = {}) {
   if (!product) {
     return {
       id: '',
       mode: 'create',
       name: '',
       categoryId: '',
-      unitId: '',
+      unitId: inventoryPreferences.defaultUnitId || '',
       type: 'basic',
       costPrice: 0,
       sellPrice: 0,
       trackStock: true,
       stock: 0,
-      minimumStock: 0,
+      minimumStock: inventoryPreferences.defaultMinimumStock ?? 0,
       sku: '',
       barcode: '',
       image: '',
       status: 'Aktif',
       isFavorite: false,
-      variants: [createEmptyVariant()],
+      variants: [createEmptyVariant(inventoryPreferences.defaultMinimumStock ?? 0)],
     }
   }
 
@@ -116,7 +116,7 @@ function mapProductToForm(product, productVariants) {
             stock: variant.stock,
             minimumStock: variant.minimumStock,
           }))
-        : [createEmptyVariant()],
+        : [createEmptyVariant(inventoryPreferences.defaultMinimumStock ?? 0)],
   }
 }
 
@@ -205,9 +205,12 @@ function ProductFormModal({
   units,
   product,
   productVariants,
+  inventoryPreferences,
   mode = 'create',
 }) {
-  const [form, setForm] = useState(mapProductToForm(product, productVariants))
+  const [form, setForm] = useState(() =>
+    mapProductToForm(product, productVariants, inventoryPreferences),
+  )
 
   useEffect(() => {
     if (!open) {
@@ -215,10 +218,10 @@ function ProductFormModal({
     }
 
     setForm({
-      ...mapProductToForm(product, productVariants),
+      ...mapProductToForm(product, productVariants, inventoryPreferences),
       mode,
     })
-  }, [mode, open, product, productVariants])
+  }, [inventoryPreferences, mode, open, product, productVariants])
 
   const isEdit = mode === 'edit'
   const isView = mode === 'view'
@@ -280,20 +283,20 @@ function ProductFormModal({
       onClose={onClose}
       title={
         mode === 'create'
-          ? 'Tambah Produk Baru'
+          ? 'Add New Product'
           : mode === 'edit'
-            ? 'Edit Produk'
-            : 'Detail Produk'
+            ? 'Edit Product'
+            : 'Product Details'
       }
       className="max-w-5xl"
     >
       <form className="space-y-6" onSubmit={handleSubmit}>
         <div className="rounded-[28px] border border-blue-100 bg-[linear-gradient(135deg,#eff6ff,#ffffff)] px-5 py-4">
           <p className="text-sm font-semibold text-blue-700">
-            Isi informasi inti terlebih dahulu, lalu atur stok atau varian sesuai tipe produk.
+            Enter the core details, then configure inventory or variants based on the product type.
           </p>
           <p className="mt-1 text-sm text-slate-500">
-            Field penting yang perlu dipastikan: nama produk, kategori, satuan, tipe produk, dan harga jual.
+            Required fields: product name, category, unit, product type, and selling price.
           </p>
         </div>
 
@@ -304,15 +307,15 @@ function ProductFormModal({
                 <ShoppingBag className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-900">Informasi Utama</h3>
+                <h3 className="text-xl font-bold text-slate-900">Core Information</h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  Data ini akan dipakai di katalog produk dan layar kasir.
+                  This data will be used in the product catalog and POS screen.
                 </p>
               </div>
             </div>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
-                <label className="form-label">Nama Produk</label>
+                <label className="form-label">Product Name</label>
                 <input
                   className="form-input"
                   value={form.name}
@@ -323,14 +326,14 @@ function ProductFormModal({
                       name: event.target.value,
                     }))
                   }
-                  placeholder="Masukkan nama produk"
+                  placeholder="Enter product name"
                 />
                 <p className="mt-2 text-xs text-slate-400">
-                  Gunakan nama yang mudah dikenali kasir, misalnya Air Mineral 600 ml.
+                  Use a name that is easy to recognize, such as Mineral Water 600 ml.
                 </p>
               </div>
               <div>
-                <label className="form-label">Kategori</label>
+                <label className="form-label">Category</label>
                 <select
                   className="form-select"
                   value={form.categoryId}
@@ -342,7 +345,7 @@ function ProductFormModal({
                     }))
                   }
                 >
-                  <option value="">Pilih kategori</option>
+                  <option value="">Select a category</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
@@ -350,11 +353,11 @@ function ProductFormModal({
                   ))}
                 </select>
                 <p className="mt-2 text-xs text-slate-400">
-                  Kategori membantu produk lebih cepat ditemukan saat transaksi.
+                  Categories help products appear faster during transactions.
                 </p>
               </div>
               <div>
-                <label className="form-label">Satuan</label>
+                <label className="form-label">Unit</label>
                 <select
                   className="form-select"
                   value={form.unitId}
@@ -366,7 +369,7 @@ function ProductFormModal({
                     }))
                   }
                 >
-                  <option value="">Pilih satuan</option>
+                  <option value="">Select a unit</option>
                   {units.map((unit) => (
                     <option key={unit.id} value={unit.id}>
                       {unit.name}
@@ -374,11 +377,11 @@ function ProductFormModal({
                   ))}
                 </select>
                 <p className="mt-2 text-xs text-slate-400">
-                  Contoh: pcs, kg, liter, paket, atau set.
+                  Examples: pcs, kg, liter, bundle, or set.
                 </p>
               </div>
               <div className="md:col-span-2">
-                <label className="form-label">Tipe Produk</label>
+                <label className="form-label">Product Type</label>
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {PRODUCT_TYPES.map((type) => (
                     <ProductTypeCard
@@ -403,12 +406,12 @@ function ProductFormModal({
                 </div>
                 {isEdit ? (
                   <p className="mt-3 text-xs text-slate-400">
-                    Tipe produk dikunci saat edit agar histori stok dan transaksi tetap aman.
+                    Product type is locked during editing to preserve inventory and transaction history.
                   </p>
                 ) : null}
               </div>
               <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <label className="form-label">Harga Modal</label>
+                <label className="form-label">Cost Price</label>
                 <CurrencyInput
                   value={form.costPrice}
                   disabled={isView}
@@ -418,14 +421,14 @@ function ProductFormModal({
                       costPrice: event.target.value,
                     }))
                   }
-                  placeholder="Contoh 10000"
+                  placeholder="Example: 10000"
                 />
                 <p className="mt-2 text-xs text-slate-400">
-                  Dipakai untuk menghitung perkiraan untung.
+                  Used to calculate estimated profit.
                 </p>
               </div>
               <div className="rounded-3xl border border-blue-100 bg-blue-50/50 px-4 py-4">
-                <label className="form-label">Harga Jual</label>
+                <label className="form-label">Selling Price</label>
                 <CurrencyInput
                   value={form.sellPrice}
                   disabled={isView}
@@ -435,10 +438,10 @@ function ProductFormModal({
                       sellPrice: event.target.value,
                     }))
                   }
-                  placeholder="Contoh 15000"
+                  placeholder="Example: 15000"
                 />
                 <p className="mt-2 text-xs text-slate-400">
-                  Harga ini yang muncul di kasir saat produk dijual.
+                  This price appears in the POS when the product is sold.
                 </p>
               </div>
               <div>
@@ -455,11 +458,11 @@ function ProductFormModal({
                         sku: event.target.value,
                       }))
                     }
-                    placeholder="Opsional"
+                    placeholder="Optional"
                   />
                 </div>
                 <p className="mt-2 text-xs text-slate-400">
-                  Berguna jika Anda ingin kode internal untuk gudang atau katalog.
+                  Useful for internal warehouse or catalog codes.
                 </p>
               </div>
               <div>
@@ -476,18 +479,18 @@ function ProductFormModal({
                         barcode: event.target.value,
                       }))
                     }
-                    placeholder="Opsional"
+                    placeholder="Optional"
                   />
                 </div>
                 <p className="mt-2 text-xs text-slate-400">
-                  Isi jika Anda ingin scan produk lebih cepat di masa depan.
+                  Add one to scan products faster in the future.
                 </p>
               </div>
               <div className="md:col-span-2 flex items-center justify-between rounded-3xl bg-slate-50 px-4 py-4">
                 <div>
-                  <p className="font-semibold text-slate-900">Favorit di Kasir</p>
+                  <p className="font-semibold text-slate-900">POS Favorite</p>
                   <p className="text-sm text-slate-500">
-                    Produk favorit akan muncul saat filter Favorit dipilih.
+                    Favorite products appear when the Favorites filter is selected.
                   </p>
                 </div>
                 <label className="inline-flex items-center gap-3 text-sm font-semibold text-slate-600">
@@ -515,9 +518,9 @@ function ProductFormModal({
                 <ImagePlus className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-900">Foto & Ringkasan</h3>
+                <h3 className="text-xl font-bold text-slate-900">Photo & Summary</h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  Foto bersifat opsional, tetapi membantu kasir mengenali produk lebih cepat.
+                  A photo is optional, but helps cashiers identify products faster.
                 </p>
               </div>
             </div>
@@ -531,8 +534,8 @@ function ProductFormModal({
               ) : (
                 <>
                   <ImagePlus className="h-10 w-10 text-slate-400" />
-                  <p className="mt-3 text-base font-semibold text-slate-700">Pilih gambar</p>
-                  <p className="mt-1 text-sm text-slate-500">JPG / PNG maksimal 2 MB</p>
+                  <p className="mt-3 text-base font-semibold text-slate-700">Choose Image</p>
+                  <p className="mt-1 text-sm text-slate-500">JPG / PNG, maximum 2 MB</p>
                 </>
               )}
               {!isView ? (
@@ -551,12 +554,12 @@ function ProductFormModal({
                   Checklist cepat
                 </p>
                 <div className="mt-3 space-y-2 text-sm text-slate-600">
-                  <p>{form.name ? 'Nama produk sudah diisi' : 'Isi nama produk terlebih dahulu'}</p>
+                  <p>{form.name ? 'Product name added' : 'Enter a product name first'}</p>
                   <p>
-                    {form.categoryId ? 'Kategori sudah dipilih' : 'Pilih kategori agar produk mudah dicari'}
+                    {form.categoryId ? 'Category selected' : 'Select a category to make the product easy to find'}
                   </p>
-                  <p>{form.unitId ? 'Satuan sudah dipilih' : 'Pilih satuan jual yang sesuai'}</p>
-                  <p>{toNumber(form.sellPrice) > 0 ? 'Harga jual sudah siap' : 'Isi harga jual agar bisa disimpan'}</p>
+                  <p>{form.unitId ? 'Unit selected' : 'Select an appropriate sales unit'}</p>
+                  <p>{toNumber(form.sellPrice) > 0 ? 'Selling price added' : 'Enter a selling price to save'}</p>
                 </div>
               </div>
             </div>
@@ -567,9 +570,9 @@ function ProductFormModal({
           <div className="rounded-3xl border border-slate-200 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-xl font-bold text-slate-900">Lacak Stok</h3>
+                <h3 className="text-xl font-bold text-slate-900">Track Inventory</h3>
                 <p className="text-sm text-slate-500">
-                  Hitung dan kelola ketersediaan stok produk ini.
+                  Track and manage this product's availability.
                 </p>
               </div>
               <input
@@ -588,20 +591,20 @@ function ProductFormModal({
 
             {isService ? (
               <div className="mt-5 rounded-3xl bg-emerald-50 p-4 text-sm text-emerald-700">
-                Produk ini tidak menggunakan stok.
+                This product does not track inventory.
               </div>
             ) : null}
 
             {isVariantProduct ? (
               <div className="mt-5 rounded-3xl bg-blue-50 p-4 text-sm text-blue-700">
-                Produk varian selalu melacak stok per varian agar transaksi tetap akurat.
+                Variant products always track inventory per variant for accurate transactions.
               </div>
             ) : null}
 
             {!isService && !isVariantProduct ? (
               <div className="mt-5 grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="form-label">{isEdit ? 'Stok saat ini' : 'Stok awal'}</label>
+                  <label className="form-label">{isEdit ? 'Current Stock' : 'Initial Stock'}</label>
                   <input
                     type="number"
                     step={stockStep}
@@ -617,16 +620,16 @@ function ProductFormModal({
                   />
                   {isEdit ? (
                     <p className="mt-2 text-xs text-slate-400">
-                      Gunakan halaman Stok untuk menambah atau mengurangi jumlah.
+                      Use the Inventory page to increase or decrease quantities.
                     </p>
                   ) : (
                     <p className="mt-2 text-xs text-slate-400">
-                      Isi stok awal jika produk langsung tersedia setelah dibuat.
+                      Enter initial stock if the product is available immediately.
                     </p>
                   )}
                 </div>
                 <div>
-                  <label className="form-label">Stok minimum</label>
+                  <label className="form-label">Minimum Stock</label>
                   <input
                     type="number"
                     step={stockStep}
@@ -641,7 +644,7 @@ function ProductFormModal({
                     }
                   />
                   <p className="mt-2 text-xs text-slate-400">
-                    Sistem akan memberi peringatan saat stok menyentuh angka ini.
+                    The system will alert you when stock reaches this level.
                   </p>
                 </div>
               </div>
@@ -649,8 +652,8 @@ function ProductFormModal({
           </div>
 
           <div className="rounded-3xl border border-slate-200 p-5">
-            <h3 className="text-xl font-bold text-slate-900">Status Produk</h3>
-            <p className="text-sm text-slate-500">Atur apakah produk tampil aktif di katalog kasir.</p>
+            <h3 className="text-xl font-bold text-slate-900">Product Status</h3>
+            <p className="text-sm text-slate-500">Choose whether the product appears in the POS catalog.</p>
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {['Aktif', 'Nonaktif'].map((status) => (
                 <button
@@ -669,11 +672,11 @@ function ProductFormModal({
                       : 'border-slate-200 text-slate-600 hover:border-blue-200'
                   }`}
                 >
-                  <p className="font-semibold">{status}</p>
+                  <p className="font-semibold">{status === 'Aktif' ? 'Active' : 'Inactive'}</p>
                   <p className="mt-1 text-sm">
                     {status === 'Aktif'
-                      ? 'Produk tampil dan bisa dijual di kasir.'
-                      : 'Produk disembunyikan dari kasir tanpa menghapus data.'}
+                      ? 'The product is visible and available for sale.'
+                      : 'The product is hidden from the POS without deleting its data.'}
                   </p>
                 </button>
               ))}
@@ -685,9 +688,9 @@ function ProductFormModal({
           <div className="rounded-3xl border border-slate-200 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="text-xl font-bold text-slate-900">Daftar Varian</h3>
+                <h3 className="text-xl font-bold text-slate-900">Variant List</h3>
                 <p className="text-sm text-slate-500">
-                  Tambahkan warna, ukuran, rasa, atau model produk. Setiap varian bisa punya harga dan stok sendiri.
+                  Add colors, sizes, flavors, or models. Each variant can have its own price and stock.
                 </p>
               </div>
               {!isView ? (
@@ -696,12 +699,15 @@ function ProductFormModal({
                   onClick={() =>
                     setForm((current) => ({
                       ...current,
-                      variants: [...current.variants, createEmptyVariant()],
+                      variants: [
+                        ...current.variants,
+                        createEmptyVariant(inventoryPreferences?.defaultMinimumStock ?? 0),
+                      ],
                     }))
                   }
                 >
                   <Plus className="h-4 w-4" />
-                  Tambah varian
+                  Add Variant
                 </Button>
               ) : null}
             </div>
@@ -710,7 +716,7 @@ function ProductFormModal({
                 <div key={variant.id || index} className="rounded-3xl border border-slate-200 p-4">
                   <div className="grid gap-4 lg:grid-cols-6">
                     <div className="lg:col-span-2">
-                      <label className="form-label">Nama varian</label>
+                      <label className="form-label">Variant Name</label>
                       <input
                         className="form-input"
                         value={variant.name}
@@ -728,7 +734,7 @@ function ProductFormModal({
                         onChange={(event) =>
                           updateVariant(index, { attributes: event.target.value })
                         }
-                        placeholder="Mis. Warna Hitam, Ukuran M"
+                        placeholder="E.g. Black, Size M"
                       />
                     </div>
                     <div>
@@ -759,7 +765,7 @@ function ProductFormModal({
                   </div>
                   <div className="mt-4 grid gap-4 md:grid-cols-4">
                     <div>
-                      <label className="form-label">Harga jual</label>
+                      <label className="form-label">Selling Price</label>
                       <CurrencyInput
                         value={variant.sellPrice}
                         disabled={isView}
@@ -769,7 +775,7 @@ function ProductFormModal({
                       />
                     </div>
                     <div>
-                      <label className="form-label">Harga modal</label>
+                      <label className="form-label">Cost Price</label>
                       <CurrencyInput
                         value={variant.costPrice}
                         disabled={isView}
@@ -779,7 +785,7 @@ function ProductFormModal({
                       />
                     </div>
                     <div>
-                      <label className="form-label">{isEdit ? 'Stok saat ini' : 'Stok awal'}</label>
+                      <label className="form-label">{isEdit ? 'Current Stock' : 'Initial Stock'}</label>
                       <input
                         type="number"
                         className="form-input"
@@ -789,7 +795,7 @@ function ProductFormModal({
                       />
                     </div>
                     <div>
-                      <label className="form-label">Stok minimum</label>
+                      <label className="form-label">Minimum Stock</label>
                       <input
                         type="number"
                         className="form-input"
@@ -809,9 +815,9 @@ function ProductFormModal({
 
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={onClose}>
-            {isView ? 'Tutup' : 'Batal'}
+            {isView ? 'Close' : 'Cancel'}
           </Button>
-          {!isView ? <Button type="submit">Simpan Produk</Button> : null}
+          {!isView ? <Button type="submit">Save Product</Button> : null}
         </div>
       </form>
     </Modal>

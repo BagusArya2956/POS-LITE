@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Eye, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react'
+import { Eye, Pencil, Plus, Search, Settings2, Star, Trash2 } from 'lucide-react'
 import Badge from '../components/ui/Badge.jsx'
 import Button from '../components/ui/Button.jsx'
 import Card from '../components/ui/Card.jsx'
 import EmptyState from '../components/ui/EmptyState.jsx'
 import ProductFormModal from '../components/products/ProductFormModal.jsx'
+import CatalogManagementModal from '../components/products/CatalogManagementModal.jsx'
 import { usePos } from '../context/PosContext.jsx'
 import { formatQuantity, formatRupiah, humanizeProductType } from '../lib/format.js'
 import {
@@ -16,10 +17,20 @@ import {
 } from '../lib/selectors.js'
 
 function ProductsPage() {
-  const { database, upsertProduct, deleteProduct } = usePos()
+  const {
+    database,
+    upsertProduct,
+    deleteProduct,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    addUnit,
+    deleteUnit,
+  } = usePos()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [catalogOpen, setCatalogOpen] = useState(false)
   const [modalState, setModalState] = useState({
     open: false,
     mode: 'create',
@@ -46,12 +57,12 @@ function ProductsPage() {
 
   function handleSaveProduct(payload) {
     if (!payload.name || !payload.categoryId || !payload.unitId) {
-      window.alert('Nama, kategori, dan satuan wajib diisi.')
+      window.alert('Name, category, and unit are required.')
       return
     }
 
     if (payload.type === 'variant' && payload.variants.length === 0) {
-      window.alert('Produk varian minimal harus memiliki satu varian.')
+      window.alert('A variant product must have at least one variant.')
       return
     }
 
@@ -76,7 +87,7 @@ function ProductsPage() {
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input
               className="form-input pl-12"
-              placeholder="Cari produk..."
+              placeholder="Search products..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -87,7 +98,7 @@ function ProductsPage() {
               value={categoryFilter}
               onChange={(event) => setCategoryFilter(event.target.value)}
             >
-              <option value="all">Semua kategori</option>
+              <option value="all">All Categories</option>
               {database.categories.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
@@ -99,27 +110,33 @@ function ProductsPage() {
               value={typeFilter}
               onChange={(event) => setTypeFilter(event.target.value)}
             >
-              <option value="all">Semua tipe</option>
-              <option value="basic">Barang biasa</option>
-              <option value="variant">Barang varian</option>
-              <option value="weighted">Berat / volume</option>
-              <option value="package">Paket</option>
-              <option value="service">Jasa tanpa stok</option>
+              <option value="all">All Types</option>
+              <option value="basic">Standard Product</option>
+              <option value="variant">Variant Product</option>
+              <option value="weighted">Weight / Volume</option>
+              <option value="package">Bundle</option>
+              <option value="service">Service without inventory</option>
             </select>
           </div>
-          <Button
-            size="lg"
-            onClick={() =>
-              setModalState({
-                open: true,
-                mode: 'create',
-                productId: '',
-              })
-            }
-          >
-            <Plus className="h-4 w-4" />
-            Tambah Produk
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button size="lg" variant="secondary" onClick={() => setCatalogOpen(true)}>
+              <Settings2 className="h-4 w-4" />
+              Manage catalog
+            </Button>
+            <Button
+              size="lg"
+              onClick={() =>
+                setModalState({
+                  open: true,
+                  mode: 'create',
+                  productId: '',
+                })
+              }
+            >
+              <Plus className="h-4 w-4" />
+              Add Product
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -128,14 +145,14 @@ function ProductsPage() {
           <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
-                <th className="px-6 py-4 font-semibold">Nama Produk</th>
-                <th className="px-6 py-4 font-semibold">Kategori</th>
-                <th className="px-6 py-4 font-semibold">Tipe Produk</th>
-                <th className="px-6 py-4 font-semibold">Satuan</th>
-                <th className="px-6 py-4 font-semibold">Harga Jual</th>
-                <th className="px-6 py-4 font-semibold">Stok</th>
+                <th className="px-6 py-4 font-semibold">Product Name</th>
+                <th className="px-6 py-4 font-semibold">Category</th>
+                <th className="px-6 py-4 font-semibold">Product Type</th>
+                <th className="px-6 py-4 font-semibold">Unit</th>
+                <th className="px-6 py-4 font-semibold">Selling Price</th>
+                <th className="px-6 py-4 font-semibold">Inventory</th>
                 <th className="px-6 py-4 font-semibold">Status</th>
-                <th className="px-6 py-4 font-semibold text-right">Aksi</th>
+                <th className="px-6 py-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -143,8 +160,8 @@ function ProductsPage() {
                 <tr>
                   <td colSpan="8" className="px-6 py-8">
                     <EmptyState
-                      title="Produk belum tersedia"
-                      description="Tambahkan produk baru atau ubah filter pencarian."
+                      title="No products available"
+                      description="Add a new product or change your filters."
                     />
                   </td>
                 </tr>
@@ -174,8 +191,8 @@ function ProductsPage() {
                             </div>
                             <p className="text-xs text-slate-500">
                               {product.type === 'variant'
-                                ? `${productVariants.length} varian`
-                                : product.sku || 'Tanpa SKU'}
+                                ? `${productVariants.length} variants`
+                                : product.sku || 'No SKU'}
                             </p>
                           </div>
                         </div>
@@ -198,12 +215,12 @@ function ProductsPage() {
                               : `${formatQuantity(currentStock)} ${getUnitName(database.units, product.unitId)}`}
                           </Badge>
                         ) : (
-                          <Badge tone="green">Tanpa stok</Badge>
+                          <Badge tone="green">No inventory</Badge>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         <Badge tone={product.status === 'Aktif' ? 'green' : 'slate'}>
-                          {product.status}
+                          {product.status === 'Aktif' ? 'Active' : 'Inactive'}
                         </Badge>
                       </td>
                       <td className="px-6 py-4">
@@ -238,7 +255,7 @@ function ProductsPage() {
                             variant="danger"
                             size="sm"
                             onClick={() => {
-                              if (window.confirm(`Hapus produk ${product.name}?`)) {
+                              if (window.confirm(`Delete product ${product.name}?`)) {
                                 const result = deleteProduct(product.id)
                                 if (!result.ok) {
                                   window.alert(result.message)
@@ -273,7 +290,21 @@ function ProductsPage() {
         units={database.units}
         product={activeProduct}
         productVariants={activeVariants}
+        inventoryPreferences={database.storeSettings?.inventoryPreferences}
         mode={modalState.mode}
+      />
+
+      <CatalogManagementModal
+        open={catalogOpen}
+        onClose={() => setCatalogOpen(false)}
+        categories={database.categories}
+        units={database.units}
+        products={database.products}
+        onAddCategory={addCategory}
+        onUpdateCategory={updateCategory}
+        onDeleteCategory={deleteCategory}
+        onAddUnit={addUnit}
+        onDeleteUnit={deleteUnit}
       />
     </div>
   )

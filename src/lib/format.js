@@ -1,5 +1,5 @@
 export function formatRupiah(value) {
-  return new Intl.NumberFormat('id-ID', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'IDR',
     maximumFractionDigits: 0,
@@ -7,18 +7,18 @@ export function formatRupiah(value) {
 }
 
 export function formatNumber(value) {
-  return new Intl.NumberFormat('id-ID').format(Number(value || 0))
+  return new Intl.NumberFormat('en-US').format(Number(value || 0))
 }
 
 export function formatQuantity(value) {
-  return new Intl.NumberFormat('id-ID', {
+  return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 3,
   }).format(Number(value || 0))
 }
 
 export function formatDate(value, options = {}) {
-  return new Intl.DateTimeFormat('id-ID', {
+  return new Intl.DateTimeFormat('en-US', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -27,7 +27,7 @@ export function formatDate(value, options = {}) {
 }
 
 export function formatShortDate(value) {
-  return new Intl.DateTimeFormat('id-ID', {
+  return new Intl.DateTimeFormat('en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -35,7 +35,7 @@ export function formatShortDate(value) {
 }
 
 export function formatDateTime(value) {
-  return new Intl.DateTimeFormat('id-ID', {
+  return new Intl.DateTimeFormat('en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -45,7 +45,7 @@ export function formatDateTime(value) {
 }
 
 export function formatClock(value) {
-  return new Intl.DateTimeFormat('id-ID', {
+  return new Intl.DateTimeFormat('en-US', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -67,7 +67,7 @@ export function getTodayDateKey() {
 
 export function humanizePaymentMethod(method) {
   const map = {
-    cash: 'Tunai',
+    cash: 'Cash',
     qris: 'QRIS',
     transfer: 'Transfer',
   }
@@ -77,11 +77,11 @@ export function humanizePaymentMethod(method) {
 
 export function humanizeProductType(type) {
   const map = {
-    basic: 'Barang biasa',
-    variant: 'Barang varian',
-    weighted: 'Berat / volume',
-    package: 'Paket',
-    service: 'Jasa tanpa stok',
+    basic: 'Standard Product',
+    variant: 'Variant product',
+    weighted: 'Weight / volume',
+    package: 'Bundle',
+    service: 'Service without inventory',
   }
 
   return map[type] ?? type

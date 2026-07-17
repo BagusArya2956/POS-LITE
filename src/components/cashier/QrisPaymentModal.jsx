@@ -22,13 +22,13 @@ function getStatusTone(status) {
 function humanizeGatewayStatus(status) {
   const normalized = String(status || '').toLowerCase()
   const map = {
-    pending: 'Menunggu pembayaran',
-    settlement: 'Pembayaran berhasil',
-    capture: 'Pembayaran berhasil',
+    pending: 'Waiting for payment',
+    settlement: 'Payment successful',
+    capture: 'Payment successful',
     expire: 'QR kedaluwarsa',
-    cancel: 'Dibatalkan',
+    cancel: 'Cancelled',
     deny: 'Ditolak',
-    failure: 'Gagal',
+    failure: 'Failed',
   }
 
   return map[normalized] || normalized || '-'
@@ -73,7 +73,7 @@ function QrisPaymentModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Pembayaran QRIS"
+      title="QRIS Payment"
       className="max-w-4xl"
       contentClassName="p-0"
     >
@@ -99,13 +99,13 @@ function QrisPaymentModal({
             {payload.qrUrl ? (
               <img
                 src={payload.qrUrl}
-                alt="QRIS pembayaran"
+                alt="QRIS payment"
                 className="h-72 w-72 rounded-3xl bg-white object-contain p-4 shadow-sm"
               />
             ) : (
               <div className="flex h-72 w-72 flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white text-center text-slate-500">
                 <Smartphone className="h-10 w-10" />
-                <p className="mt-3 font-semibold">QR belum tersedia</p>
+                <p className="mt-3 font-semibold">QR code unavailable</p>
               </div>
             )}
           </div>
@@ -119,14 +119,14 @@ function QrisPaymentModal({
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Batas waktu
+                Time limit
               </p>
               <p className="mt-2 font-semibold text-slate-900">
                 {payload.expiresAt ? formatDateTime(payload.expiresAt) : '-'}
               </p>
               {!isPaid && payload.expiresAt ? (
                 <p className="mt-2 text-sm text-slate-500">
-                  Sisa waktu {minutes}:{seconds}
+                  Time remaining {minutes}:{seconds}
                 </p>
               ) : null}
             </div>
@@ -135,11 +135,11 @@ function QrisPaymentModal({
 
         <div className="bg-slate-50 p-6">
           <div className="rounded-3xl border border-slate-200 bg-white p-5">
-            <h3 className="text-xl font-bold text-slate-900">Langkah pembayaran</h3>
+            <h3 className="text-xl font-bold text-slate-900">Payment steps</h3>
             <ol className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-              <li>1. Minta pelanggan scan QRIS dengan e-wallet atau mobile banking.</li>
-              <li>2. Tunggu sampai provider mengirim status pembayaran berhasil.</li>
-              <li>3. Setelah status berhasil, transaksi akan disimpan otomatis ke sistem.</li>
+              <li>1. Ask the customer to scan the QRIS code using an e-wallet or mobile banking app.</li>
+              <li>2. Wait for the provider to confirm the payment.</li>
+              <li>3. Once confirmed, the transaction will be saved automatically.</li>
             </ol>
           </div>
 
@@ -167,12 +167,12 @@ function QrisPaymentModal({
             <div className="mt-5 flex flex-wrap gap-3">
               <Button variant="secondary" onClick={onRefreshStatus} disabled={checking}>
                 <RefreshCcw className={`h-4 w-4 ${checking ? 'animate-spin' : ''}`} />
-                Cek Status
+                Check Status
               </Button>
               {isPaid ? (
                 <Button onClick={onConfirmPaid}>
                   <CheckCircle2 className="h-4 w-4" />
-                  Simpan Transaksi
+                  Save Transaction
                 </Button>
               ) : null}
             </div>

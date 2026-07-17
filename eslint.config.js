@@ -17,6 +17,10 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // Existing modal forms intentionally reset local state when their open/input props change.
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
   {
     files: ['server/**/*.js'],

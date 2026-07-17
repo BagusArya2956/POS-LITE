@@ -37,6 +37,18 @@ function createNotification(title, description, tone = 'success') {
   }
 }
 
+function generateProductSku(products) {
+  let sequence = products.length + 1
+  let candidate = `VGO-${String(sequence).padStart(5, '0')}`
+
+  while (products.some((product) => product.sku === candidate)) {
+    sequence += 1
+    candidate = `VGO-${String(sequence).padStart(5, '0')}`
+  }
+
+  return candidate
+}
+
 export function PosProvider({ children }) {
   const [database, setDatabase] = useState(() => loadDatabase())
   const [session, setSession] = useState(() => loadSession())
@@ -118,7 +130,7 @@ export function PosProvider({ children }) {
           ...current,
           ...getPersistenceMeta(),
           status: 'error',
-          error: error.message || 'Gagal tersambung ke Supabase staging.',
+          error: error.message || 'Failed to connect to Supabase staging.',
         }))
       }
     }
@@ -171,7 +183,7 @@ export function PosProvider({ children }) {
           ...current,
           ...getPersistenceMeta(),
           status: 'error',
-          error: error.message || 'Sinkronisasi ke Supabase gagal.',
+          error: error.message || 'Supabase synchronization failed.',
         }))
       }
     }, 500)
@@ -208,16 +220,24 @@ export function PosProvider({ children }) {
       whatsapp: payload.whatsapp,
       logo: payload.logo || '',
       businessType: payload.businessType,
+      businessVariant: payload.businessVariant || '',
+      salesMode: payload.salesMode || 'counter',
       stockTypesManaged: payload.stockTypesManaged,
       receiptName: payload.storeName,
       receiptAddress: payload.address,
       receiptWhatsApp: payload.whatsapp,
       receiptFooter:
-        'Terima kasih atas kunjungan Anda.\nBarang yang sudah dibeli tidak dapat ditukar atau dikembalikan.',
+        'Thank you for shopping with us.\nPurchased items cannot be exchanged or returned.',
       paymentMethods: {
         cash: true,
         qris: true,
         transfer: false,
+      },
+      inventoryPreferences: {
+        defaultUnitId: units[0]?.id || '',
+        defaultMinimumStock: 5,
+        autoGenerateSku: true,
+        allowOverselling: false,
       },
       cashierName: 'Admin',
       createdAt: now,
@@ -239,13 +259,13 @@ export function PosProvider({ children }) {
     })
 
     setSession({
-      isAuthenticated: false,
-      authenticatedAt: '',
+      isAuthenticated: true,
+      authenticatedAt: now,
       setupCompletedAt: now,
       setupStoreName: payload.storeName,
     })
 
-    notify('Setup selesai', 'Pengaturan awal berhasil disimpan. Gunakan PIN 1234 untuk login pertama.')
+    notify('Setup complete', 'Initial settings saved. Use PIN 1234 for your first login.')
   }
 
   function authenticatePin(candidatePin) {
@@ -256,7 +276,7 @@ export function PosProvider({ children }) {
         setupCompletedAt: '',
         setupStoreName: '',
       })
-      notify('Akses diterima', 'Selamat datang kembali di VIGO POS.')
+      notify('Access granted', 'Welcome back to VIGO POS.')
       return true
     }
 
@@ -283,7 +303,7 @@ export function PosProvider({ children }) {
       },
     }))
 
-    notify('Pengaturan toko tersimpan', 'Profil toko dan struk berhasil diperbarui.')
+    notify('Store settings saved', 'Store profile and receipt settings updated.')
   }
 
   function updatePaymentMethods(patch) {
@@ -294,8 +314,8 @@ export function PosProvider({ children }) {
 
     if (!Object.values(nextPaymentMethods).some(Boolean)) {
       notify(
-        'Minimal satu metode aktif',
-        'Sisakan setidaknya satu metode pembayaran untuk kasir.',
+        'At least one method is required',
+        'Keep at least one payment method enabled for the POS.',
         'warning',
       )
       return { ok: false }
@@ -309,7 +329,43 @@ export function PosProvider({ children }) {
         updatedAt: new Date().toISOString(),
       },
     }))
-    notify('Metode pembayaran diperbarui', 'Perubahan metode pembayaran sudah aktif.')
+    notify('Payment methods updated', 'Payment method changes are now active.')
+    return { ok: true }
+  }
+
+  function updateInventoryPreferences(patch) {
+    const currentPreferences = database.storeSettings?.inventoryPreferences || {}
+    const nextPreferences = {
+      defaultUnitId: '',
+      defaultMinimumStock: 5,
+      autoGenerateSku: true,
+      allowOverselling: false,
+      ...currentPreferences,
+      ...patch,
+    }
+
+    nextPreferences.defaultMinimumStock = Math.max(
+      0,
+      toNumber(nextPreferences.defaultMinimumStock),
+    )
+
+    if (
+      nextPreferences.defaultUnitId &&
+      !database.units.some((unit) => unit.id === nextPreferences.defaultUnitId)
+    ) {
+      nextPreferences.defaultUnitId = ''
+    }
+
+    setDatabase((current) => ({
+      ...current,
+      storeSettings: {
+        ...current.storeSettings,
+        inventoryPreferences: nextPreferences,
+        updatedAt: new Date().toISOString(),
+      },
+    }))
+
+    notify('Inventory preferences saved', 'New products will use these defaults.')
     return { ok: true }
   }
 
@@ -318,7 +374,7 @@ export function PosProvider({ children }) {
     if (!normalizedName) {
       return {
         ok: false,
-        message: 'Nama kategori tidak boleh kosong.',
+        message: 'Category name cannot be empty.',
       }
     }
 
@@ -329,7 +385,7 @@ export function PosProvider({ children }) {
     ) {
       return {
         ok: false,
-        message: 'Kategori dengan nama yang sama sudah ada.',
+        message: 'A category with this name already exists.',
       }
     }
 
@@ -347,7 +403,7 @@ export function PosProvider({ children }) {
       ],
     }))
 
-    notify('Kategori ditambahkan', `Kategori ${normalizedName} siap digunakan.`)
+    notify('Category added', `Category ${normalizedName} is ready to use.`)
     return { ok: true }
   }
 
@@ -356,7 +412,20 @@ export function PosProvider({ children }) {
     if (!normalizedName) {
       return {
         ok: false,
-        message: 'Nama kategori tidak boleh kosong.',
+        message: 'Category name cannot be empty.',
+      }
+    }
+
+    if (
+      database.categories.some(
+        (category) =>
+          category.id !== categoryId &&
+          category.name.toLowerCase() === normalizedName.toLowerCase(),
+      )
+    ) {
+      return {
+        ok: false,
+        message: 'A category with this name already exists.',
       }
     }
 
@@ -373,7 +442,7 @@ export function PosProvider({ children }) {
       ),
     }))
 
-    notify('Kategori diperbarui', `Kategori sekarang bernama ${normalizedName}.`)
+    notify('Category updated', `Category is now named ${normalizedName}.`)
     return { ok: true }
   }
 
@@ -381,7 +450,7 @@ export function PosProvider({ children }) {
     if (database.products.some((product) => product.categoryId === categoryId)) {
       return {
         ok: false,
-        message: 'Kategori masih dipakai oleh produk. Pindahkan produk dulu sebelum menghapus.',
+        message: 'This category is still used by products. Move them before deleting it.',
       }
     }
 
@@ -390,7 +459,7 @@ export function PosProvider({ children }) {
       categories: current.categories.filter((category) => category.id !== categoryId),
     }))
 
-    notify('Kategori dihapus', 'Daftar kategori berhasil dirapikan.')
+    notify('Category deleted', 'Category list updated.')
     return { ok: true }
   }
 
@@ -399,7 +468,7 @@ export function PosProvider({ children }) {
     if (!normalizedName) {
       return {
         ok: false,
-        message: 'Nama satuan tidak boleh kosong.',
+        message: 'Unit name cannot be empty.',
       }
     }
 
@@ -408,7 +477,7 @@ export function PosProvider({ children }) {
     ) {
       return {
         ok: false,
-        message: 'Satuan sudah tersedia.',
+        message: 'This unit already exists.',
       }
     }
 
@@ -426,7 +495,7 @@ export function PosProvider({ children }) {
       ],
     }))
 
-    notify('Satuan ditambahkan', `Satuan ${normalizedName} berhasil dibuat.`)
+    notify('Unit added', `Unit ${normalizedName} created successfully.`)
     return { ok: true }
   }
 
@@ -434,16 +503,26 @@ export function PosProvider({ children }) {
     if (database.products.some((product) => product.unitId === unitId)) {
       return {
         ok: false,
-        message: 'Satuan masih dipakai produk. Ubah produk dulu sebelum menghapus.',
+        message: 'This unit is still used by products. Edit them before deleting it.',
       }
     }
 
     setDatabase((current) => ({
       ...current,
       units: current.units.filter((unit) => unit.id !== unitId),
+      storeSettings: {
+        ...current.storeSettings,
+        inventoryPreferences: {
+          ...current.storeSettings?.inventoryPreferences,
+          defaultUnitId:
+            current.storeSettings?.inventoryPreferences?.defaultUnitId === unitId
+              ? ''
+              : current.storeSettings?.inventoryPreferences?.defaultUnitId || '',
+        },
+      },
     }))
 
-    notify('Satuan dihapus', 'Daftar satuan berhasil diperbarui.')
+    notify('Unit deleted', 'Unit list updated.')
     return { ok: true }
   }
 
@@ -453,7 +532,7 @@ export function PosProvider({ children }) {
       pin: newPin,
     }))
 
-    notify('PIN berhasil diubah', 'PIN baru akan dipakai saat login berikutnya.')
+    notify('PIN changed', 'Your new PIN will be used at the next sign-in.')
   }
 
   function upsertProduct(productInput) {
@@ -490,7 +569,11 @@ export function PosProvider({ children }) {
         image: productInput.image || '',
         status: productInput.status || 'Aktif',
         isFavorite: Boolean(productInput.isFavorite),
-        sku: productInput.sku?.trim() || '',
+        sku:
+          productInput.sku?.trim() ||
+          (database.storeSettings?.inventoryPreferences?.autoGenerateSku
+            ? generateProductSku(database.products)
+            : ''),
         barcode: productInput.barcode?.trim() || '',
         createdAt: now,
         updatedAt: now,
@@ -535,8 +618,8 @@ export function PosProvider({ children }) {
               quantity: stock,
               beforeStock: 0,
               afterStock: stock,
-              note: 'Stok awal dari produk baru.',
-              reason: 'Tambah produk',
+              note: 'Initial stock from a new product.',
+              reason: 'Add product',
               transactionId: '',
               createdAt: now,
             })
@@ -558,8 +641,8 @@ export function PosProvider({ children }) {
           quantity: stock,
           beforeStock: 0,
           afterStock: stock,
-          note: 'Stok awal dari produk baru.',
-          reason: 'Tambah produk',
+          note: 'Initial stock from a new product.',
+          reason: 'Add product',
           transactionId: '',
           createdAt: now,
         })
@@ -572,7 +655,7 @@ export function PosProvider({ children }) {
         stockMovements: nextStockMovements,
       }))
 
-      notify('Produk tersimpan', `${productInput.name} berhasil ditambahkan.`)
+      notify('Product saved', `${productInput.name} was added successfully.`)
       return { ok: true }
     }
 
@@ -580,7 +663,7 @@ export function PosProvider({ children }) {
     if (!currentProduct) {
       return {
         ok: false,
-        message: 'Produk tidak ditemukan.',
+        message: 'Product not found.',
       }
     }
 
@@ -633,7 +716,7 @@ export function PosProvider({ children }) {
       if (lockedVariant) {
         return {
           ok: false,
-          message: `Varian ${lockedVariant.name} sudah punya riwayat transaksi dan tidak bisa dihapus.`,
+          message: `Variant ${lockedVariant.name} has transaction history and cannot be deleted.`,
         }
       }
 
@@ -698,8 +781,8 @@ export function PosProvider({ children }) {
             quantity: stock,
             beforeStock: 0,
             afterStock: stock,
-            note: 'Varian baru ditambahkan dari halaman produk.',
-            reason: 'Varian baru',
+            note: 'New variant added from the Products page.',
+            reason: 'New variant',
             transactionId: '',
             createdAt: now,
           })
@@ -718,8 +801,8 @@ export function PosProvider({ children }) {
             quantity: variant.stock,
             beforeStock: variant.stock,
             afterStock: 0,
-            note: 'Varian dihapus dari halaman produk.',
-            reason: 'Hapus varian',
+            note: 'Variant removed from the Products page.',
+            reason: 'Delete variant',
             transactionId: '',
             createdAt: now,
           })
@@ -733,7 +816,7 @@ export function PosProvider({ children }) {
       stockMovements: [...current.stockMovements, ...newMovements],
     }))
 
-    notify('Produk diperbarui', `${productInput.name} berhasil disimpan.`)
+    notify('Product updated', `${productInput.name} was saved successfully.`)
     return { ok: true }
   }
 
@@ -742,7 +825,7 @@ export function PosProvider({ children }) {
     if (!product) {
       return {
         ok: false,
-        message: 'Produk tidak ditemukan.',
+        message: 'Product not found.',
       }
     }
 
@@ -750,7 +833,7 @@ export function PosProvider({ children }) {
       return {
         ok: false,
         message:
-          'Produk ini sudah pernah dipakai di transaksi. Nonaktifkan produk agar histori tetap aman.',
+          'This product has transaction history. Deactivate it to preserve historical data.',
       }
     }
 
@@ -760,7 +843,7 @@ export function PosProvider({ children }) {
       variants: current.variants.filter((variant) => variant.productId !== productId),
     }))
 
-    notify('Produk dihapus', `${product.name} berhasil dihapus dari katalog.`)
+    notify('Product deleted', `${product.name} was removed from the catalog.`)
     return { ok: true }
   }
 
@@ -770,7 +853,7 @@ export function PosProvider({ children }) {
     if (!product || !product.trackStock) {
       return {
         ok: false,
-        message: 'Produk ini tidak melacak stok.',
+        message: 'This product does not track inventory.',
       }
     }
 
@@ -778,7 +861,7 @@ export function PosProvider({ children }) {
     if (productVariants.length > 0 && !variantId) {
       return {
         ok: false,
-        message: 'Pilih varian terlebih dahulu sebelum mengubah stok.',
+        message: 'Select a variant before adjusting inventory.',
       }
     }
 
@@ -791,7 +874,7 @@ export function PosProvider({ children }) {
     if (variantId && !variant) {
       return {
         ok: false,
-        message: 'Varian produk tidak ditemukan.',
+        message: 'Product variant not found.',
       }
     }
 
@@ -801,7 +884,7 @@ export function PosProvider({ children }) {
     if (amount <= 0) {
       return {
         ok: false,
-        message: 'Jumlah stok harus lebih besar dari 0.',
+        message: 'Stock quantity must be greater than 0.',
       }
     }
 
@@ -815,7 +898,7 @@ export function PosProvider({ children }) {
     if (nextStock < 0) {
       return {
         ok: false,
-        message: 'Stok tidak cukup untuk dikurangi.',
+        message: 'There is not enough stock for this adjustment.',
       }
     }
 
@@ -861,8 +944,8 @@ export function PosProvider({ children }) {
     }))
 
     notify(
-      mode === 'in' ? 'Stok ditambahkan' : 'Stok dikurangi',
-      `${product.name} sekarang memiliki stok ${nextStock}.`,
+      mode === 'in' ? 'Stock added' : 'Stock reduced',
+      `${product.name} now has stock of ${nextStock}.`,
     )
     return { ok: true }
   }
@@ -879,14 +962,14 @@ export function PosProvider({ children }) {
     if (!cartItems.length) {
       return {
         ok: false,
-        message: 'Keranjang masih kosong.',
+        message: 'The cart is empty.',
       }
     }
 
     if (!database.storeSettings?.paymentMethods?.[paymentMethod]) {
       return {
         ok: false,
-        message: 'Metode pembayaran ini sedang tidak aktif.',
+        message: 'This payment method is disabled.',
       }
     }
 
@@ -915,21 +998,21 @@ export function PosProvider({ children }) {
       if (!product) {
         return {
           ok: false,
-          message: `Produk ${cartItem.productName} tidak ditemukan.`,
+          message: `Product ${cartItem.productName} not found.`,
         }
       }
 
       if (product.type === 'variant' && !cartItem.variantId) {
         return {
           ok: false,
-          message: `Varian untuk ${cartItem.productName} harus dipilih terlebih dahulu.`,
+          message: `Variant for ${cartItem.productName} must be selected first.`,
         }
       }
 
       if (cartItem.variantId && !variant) {
         return {
           ok: false,
-          message: `Varian untuk ${cartItem.productName} tidak ditemukan.`,
+          message: `Variant for ${cartItem.productName} not found.`,
         }
       }
 
@@ -944,10 +1027,13 @@ export function PosProvider({ children }) {
           ? toNumber(variantUpdates.get(cartItem.variantId) ?? variant?.stock)
           : toNumber(productUpdates.get(cartItem.productId) ?? product.stock)
 
-        if (currentStock < quantity) {
+        if (
+          currentStock < quantity &&
+          !database.storeSettings?.inventoryPreferences?.allowOverselling
+        ) {
           return {
             ok: false,
-            message: `Stok ${cartItem.productName} tidak mencukupi.`,
+            message: `Stock ${cartItem.productName} has insufficient stock.`,
           }
         }
 
@@ -970,8 +1056,8 @@ export function PosProvider({ children }) {
           quantity,
           beforeStock: currentStock,
           afterStock: nextStock,
-          note: `Transaksi ${transactionNumber}`,
-          reason: 'Penjualan',
+          note: `Transaction ${transactionNumber}`,
+          reason: 'Sales',
           transactionId,
           createdAt: now,
         })
@@ -1007,7 +1093,7 @@ export function PosProvider({ children }) {
         subtotal,
         discount: validatedDiscount,
         total,
-        status: 'Berhasil',
+        status: 'Successful',
         cashierName: database.storeSettings?.cashierName || 'Admin',
       },
     ]
@@ -1037,7 +1123,7 @@ export function PosProvider({ children }) {
       stockMovements: [...current.stockMovements, ...stockMovements],
     }))
 
-    notify('Pembayaran berhasil', `Transaksi ${transactionNumber} sudah disimpan.`)
+    notify('Payment successful', `Transaction ${transactionNumber} saved successfully.`)
     return {
       ok: true,
       transactionId,
@@ -1049,14 +1135,14 @@ export function PosProvider({ children }) {
     if (!transaction) {
       return {
         ok: false,
-        message: 'Transaksi tidak ditemukan.',
+        message: 'Transaction not found.',
       }
     }
 
-    if (transaction.status === 'Dibatalkan') {
+    if (['Cancelled', 'Dibatalkan'].includes(transaction.status)) {
       return {
         ok: false,
-        message: 'Transaksi ini sudah dibatalkan sebelumnya.',
+        message: 'This transaction has already been cancelled.',
       }
     }
 
@@ -1102,8 +1188,8 @@ export function PosProvider({ children }) {
         quantity: item.qty,
         beforeStock: currentStock,
         afterStock: nextStock,
-        note: `Pembatalan ${transaction.transactionNumber}`,
-        reason: 'Pembatalan transaksi',
+        note: `Cancellation ${transaction.transactionNumber}`,
+        reason: 'Transaction cancellation',
         transactionId,
         createdAt: now,
       })
@@ -1133,7 +1219,7 @@ export function PosProvider({ children }) {
         item.id === transactionId
           ? {
               ...item,
-              status: 'Dibatalkan',
+              status: 'Cancelled',
               cancelledAt: now,
             }
           : item,
@@ -1141,7 +1227,7 @@ export function PosProvider({ children }) {
       stockMovements: [...current.stockMovements, ...stockMovements],
     }))
 
-    notify('Transaksi dibatalkan', `Stok dari ${transaction.transactionNumber} telah dikembalikan.`)
+    notify('Transaction cancelled', `Stock dari ${transaction.transactionNumber} has been restored.`)
     return { ok: true }
   }
 
@@ -1150,7 +1236,7 @@ export function PosProvider({ children }) {
       `vigo-pos-backup-${getDateKey(new Date())}.json`,
       JSON.stringify(database, null, 2),
     )
-    notify('Backup selesai', 'File JSON backup berhasil diunduh.')
+    notify('Backup complete', 'The JSON backup file was downloaded.')
   }
 
   function exportAllData() {
@@ -1165,12 +1251,12 @@ export function PosProvider({ children }) {
     }))
 
     exportRowsToCsv(`vigo-pos-export-${getDateKey(new Date())}.csv`, rows)
-    notify('Export selesai', 'Data transaksi berhasil diexport ke CSV.')
+    notify('Export complete', 'Transaction data exported to CSV.')
   }
 
   function restoreBackup(parsedDatabase) {
     if (!parsedDatabase || typeof parsedDatabase !== 'object' || Array.isArray(parsedDatabase)) {
-      notify('Backup gagal dipulihkan', 'Format file JSON tidak sesuai.', 'warning')
+      notify('Backup restore failed', 'Invalid JSON file format.', 'warning')
       return { ok: false }
     }
 
@@ -1183,7 +1269,7 @@ export function PosProvider({ children }) {
       setupCompletedAt: '',
       setupStoreName: '',
     })
-    notify('Backup dipulihkan', 'Data VIGO POS berhasil dimuat dari file.')
+    notify('Backup restored', 'VIGO POS data loaded from the file.')
     return { ok: true }
   }
 
@@ -1192,11 +1278,11 @@ export function PosProvider({ children }) {
 
     if (persistenceMeta.remoteEnabled) {
       notify(
-        'Reset lokal dibatasi',
-        'Mode cloud sedang aktif. Nonaktifkan sinkronisasi staging dulu sebelum mereset setup lokal.',
+        'Local reset unavailable',
+        'Cloud mode is active. Disable staging synchronization before resetting local setup.',
         'warning',
       )
-      return { ok: false, message: 'Mode cloud aktif.' }
+      return { ok: false, message: 'Cloud mode is active.' }
     }
 
     clearDatabase()
@@ -1229,6 +1315,7 @@ export function PosProvider({ children }) {
     logout,
     updateStoreSettings,
     updatePaymentMethods,
+    updateInventoryPreferences,
     addCategory,
     updateCategory,
     deleteCategory,
@@ -1254,7 +1341,7 @@ export function usePos() {
   const context = useContext(PosContext)
 
   if (!context) {
-    throw new Error('usePos harus dipakai di dalam PosProvider')
+    throw new Error('usePos must be used inside PosProvider')
   }
 
   return context

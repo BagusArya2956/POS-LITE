@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/nunito-sans';
 
 @tailwind base;
 @tailwind components;
@@ -19,7 +20,7 @@
 
   body {
     @apply min-h-screen bg-slate-100 text-slate-900 antialiased;
-    font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+    font-family: 'Geist Variable', 'Segoe UI', sans-serif;
     background-image:
       radial-gradient(circle at top left, rgba(219, 234, 254, 0.7), transparent 24rem),
       radial-gradient(circle at bottom right, rgba(226, 232, 240, 0.9), transparent 30rem);
@@ -74,6 +75,11 @@
   .pill-button-active {
     @apply border-blue-600 bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)];
   }
+
+  .font-brand {
+    font-family: 'Nunito Sans Variable', 'Geist Variable', sans-serif;
+  }
+
 }
 
 ::-webkit-scrollbar {

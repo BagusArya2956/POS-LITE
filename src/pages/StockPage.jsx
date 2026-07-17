@@ -12,11 +12,11 @@ import { formatDateTime, formatQuantity, formatRupiah } from '../lib/format.js'
 import { flattenStockRows, getInventoryValue } from '../lib/selectors.js'
 
 const movementTypeLabels = {
-  initial: 'Stok awal',
-  adjustment_in: 'Tambah stok',
-  adjustment_out: 'Kurangi stok',
-  sale: 'Penjualan',
-  cancel_sale: 'Pembatalan transaksi',
+  initial: 'Initial Stock',
+  adjustment_in: 'Add stock',
+  adjustment_out: 'Remove stock',
+  sale: 'Sales',
+  cancel_sale: 'Transaction cancellation',
 }
 
 function StockPage() {
@@ -52,23 +52,23 @@ function StockPage() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 xl:grid-cols-4">
-        <StatCard title="Total Produk" value={`${database.products.length}`} subtitle="Item aktif di katalog" />
+        <StatCard title="Total Products" value={`${database.products.length}`} subtitle="Active catalog items" />
         <StatCard
-          title="Stok Menipis"
+          title="Low Stock"
           value={`${lowStock}`}
-          subtitle="Perlu ditambah dalam waktu dekat"
+          subtitle="Restock soon"
           accent="amber"
         />
         <StatCard
-          title="Stok Habis"
+          title="Out of Stock"
           value={`${outOfStock}`}
-          subtitle="Produk tidak bisa dijual"
+          subtitle="Products unavailable for sale"
           accent="red"
         />
         <StatCard
-          title="Nilai Stok"
+          title="Inventory Value"
           value={formatRupiah(inventoryValue)}
-          subtitle="Berdasarkan harga modal"
+          subtitle="Based on cost price"
           accent="green"
         />
       </div>
@@ -76,20 +76,20 @@ function StockPage() {
       <Card className="overflow-hidden p-0">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-6 py-5">
           <div>
-            <h2 className="section-title text-[1.8rem]">Daftar Stok</h2>
-            <p className="section-subtitle mt-1">Lihat stok tiap produk dan varian dari satu tempat.</p>
+            <h2 className="section-title text-[1.8rem]">Inventory List</h2>
+            <p className="section-subtitle mt-1">View product and variant stock in one place.</p>
           </div>
           <div className="flex gap-3">
             <Button onClick={() => setModalState({ open: true, mode: 'in', selection: null })}>
               <Plus className="h-4 w-4" />
-              Tambah Stok
+              Add Stock
             </Button>
             <Button
               variant="secondary"
               onClick={() => setModalState({ open: true, mode: 'out', selection: null })}
             >
               <Minus className="h-4 w-4" />
-              Kurangi Stok
+              Remove Stock
             </Button>
           </div>
         </div>
@@ -98,14 +98,14 @@ function StockPage() {
           <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
-                <th className="px-6 py-4 font-semibold">Produk</th>
-                <th className="px-6 py-4 font-semibold">Varian</th>
-                <th className="px-6 py-4 font-semibold">Satuan</th>
+                <th className="px-6 py-4 font-semibold">Products</th>
+                <th className="px-6 py-4 font-semibold">Variant</th>
+                <th className="px-6 py-4 font-semibold">Unit</th>
                 <th className="px-6 py-4 font-semibold">SKU</th>
-                <th className="px-6 py-4 font-semibold">Stok Saat Ini</th>
-                <th className="px-6 py-4 font-semibold">Stok Minimum</th>
+                <th className="px-6 py-4 font-semibold">Current Stock</th>
+                <th className="px-6 py-4 font-semibold">Minimum Stock</th>
                 <th className="px-6 py-4 font-semibold">Status</th>
-                <th className="px-6 py-4 font-semibold text-right">Aksi</th>
+                <th className="px-6 py-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -113,8 +113,8 @@ function StockPage() {
                 <tr>
                   <td colSpan="8" className="px-6 py-8">
                     <EmptyState
-                      title="Belum ada data stok"
-                      description="Tambahkan produk baru agar daftar stok tampil di sini."
+                      title="No inventory data"
+                      description="Add a product to populate the inventory list."
                     />
                   </td>
                 </tr>
@@ -126,7 +126,7 @@ function StockPage() {
                     <td className="px-6 py-4 text-slate-600">{row.unitName}</td>
                     <td className="px-6 py-4 text-slate-600">{row.sku}</td>
                     <td className="px-6 py-4 text-slate-600">
-                      {row.trackStock ? formatQuantity(row.stock) : 'Tanpa stok'}
+                      {row.trackStock ? formatQuantity(row.stock) : 'No inventory'}
                     </td>
                     <td className="px-6 py-4 text-slate-600">
                       {row.trackStock ? formatQuantity(row.minimumStock) : '-'}
@@ -199,14 +199,14 @@ function StockPage() {
       <Modal
         open={historyState.open}
         onClose={() => setHistoryState({ open: false, rowId: '' })}
-        title={`Riwayat Stok ${selectedHistoryRow?.productName || ''}`}
+        title={`Inventory History — ${selectedHistoryRow?.productName || ''}`}
         className="max-w-4xl"
       >
         <div className="space-y-3">
           {rowMovements.length === 0 ? (
             <EmptyState
-              title="Belum ada riwayat stok"
-              description="Perubahan stok untuk item ini akan tampil di sini."
+              title="No inventory history"
+              description="Inventory changes for this item will appear here."
             />
           ) : (
             rowMovements.map((movement) => (
@@ -234,9 +234,9 @@ function StockPage() {
                   </div>
                 </div>
                 <div className="mt-3 grid gap-3 text-sm text-slate-600 md:grid-cols-3">
-                  <p>Jumlah: {formatQuantity(movement.quantity)}</p>
-                  <p>Sebelum: {formatQuantity(movement.beforeStock)}</p>
-                  <p>Sesudah: {formatQuantity(movement.afterStock)}</p>
+                  <p>Quantity: {formatQuantity(movement.quantity)}</p>
+                  <p>Before: {formatQuantity(movement.beforeStock)}</p>
+                  <p>After: {formatQuantity(movement.afterStock)}</p>
                 </div>
               </div>
             ))

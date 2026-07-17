@@ -18,6 +18,7 @@ function QuantityPickerModal({
   unitName = '',
   initialQuantity = 0,
   availableStock = null,
+  allowOverselling = false,
 }) {
   const [quantity, setQuantity] = useState(0)
   const productType = product?.type || 'basic'
@@ -47,12 +48,17 @@ function QuantityPickerModal({
   function submit() {
     const normalizedQuantity = normalizeQuantity(quantity, productType, unitName)
     if (normalizedQuantity <= 0) {
-      window.alert('Jumlah harus lebih besar dari 0.')
+      window.alert('Quantity must be greater than 0.')
       return
     }
 
-    if (product.trackStock && availableStock !== null && normalizedQuantity > availableStock) {
-      window.alert('Jumlah melebihi stok yang tersedia.')
+    if (
+      product.trackStock &&
+      availableStock !== null &&
+      normalizedQuantity > availableStock &&
+      !allowOverselling
+    ) {
+      window.alert('Quantity exceeds available stock.')
       return
     }
 
@@ -60,7 +66,7 @@ function QuantityPickerModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Atur Jumlah" className="max-w-xl">
+    <Modal open={open} onClose={onClose} title="Set Quantity" className="max-w-xl">
       <div className="space-y-6">
         <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
           <div className="flex items-start justify-between gap-4">
@@ -70,9 +76,9 @@ function QuantityPickerModal({
               <div className="mt-3 flex flex-wrap gap-2">
                 <Badge tone="blue">{unitName}</Badge>
                 {product.trackStock ? (
-                  <Badge tone="green">Stok tersedia {formatQuantity(availableStock)}</Badge>
+                  <Badge tone="green">Available stock: {formatQuantity(availableStock)}</Badge>
                 ) : (
-                  <Badge tone="green">Tanpa stok</Badge>
+                  <Badge tone="green">No inventory</Badge>
                 )}
               </div>
             </div>
@@ -83,7 +89,7 @@ function QuantityPickerModal({
         </div>
 
         <div>
-          <label className="form-label">Jumlah ({unitName})</label>
+          <label className="form-label">Quantity ({unitName})</label>
           <input
             type="number"
             min={step}
@@ -94,8 +100,8 @@ function QuantityPickerModal({
           />
           <p className="mt-2 text-sm text-slate-500">
             {allowDecimal
-              ? `Produk ini mendukung qty pecahan dengan langkah ${formatQuantity(step)} ${unitName}.`
-              : 'Produk ini memakai qty satuan utuh.'}
+              ? `This product supports fractional quantities in increments of ${formatQuantity(step)} ${unitName}.`
+              : 'This product uses whole-unit quantities.'}
           </p>
         </div>
 
@@ -113,14 +119,14 @@ function QuantityPickerModal({
         </div>
 
         <div className="rounded-3xl bg-blue-50 p-4 text-sm text-blue-700">
-          Perkiraan subtotal: {formatRupiah(Number(variant?.sellPrice || product.sellPrice) * Number(quantity || 0))}
+          Estimated subtotal: {formatRupiah(Number(variant?.sellPrice || product.sellPrice) * Number(quantity || 0))}
         </div>
 
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={onClose}>
-            Batal
+            Cancel
           </Button>
-          <Button onClick={submit}>Simpan Jumlah</Button>
+          <Button onClick={submit}>Save Quantity</Button>
         </div>
       </div>
     </Modal>

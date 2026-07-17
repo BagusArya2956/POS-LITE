@@ -28,7 +28,7 @@ export async function createQrisPayment(payload) {
   const parsed = await response.json().catch(() => ({}))
 
   if (!response.ok) {
-    throw new Error(parsed.message || 'Gagal membuat QRIS.')
+    throw new Error(parsed.message || 'Failed to create a QRIS payment.')
   }
 
   return parsed
@@ -39,7 +39,7 @@ export async function fetchQrisStatus(orderId) {
   const parsed = await response.json().catch(() => ({}))
 
   if (!response.ok) {
-    throw new Error(parsed.message || 'Gagal memeriksa status QRIS.')
+    throw new Error(parsed.message || 'Failed to check QRIS status.')
   }
 
   return parsed

@@ -1,11 +1,8 @@
 import {
-  BarChart3,
-  Box,
   Boxes,
-  CheckCircle2,
+  Check,
   ChevronRight,
   KeyRound,
-  Landmark,
   PackagePlus,
   ShoppingBag,
   Wallet,
@@ -21,9 +18,6 @@ import {
   YAxis,
 } from 'recharts'
 import Badge from '../components/ui/Badge.jsx'
-import Card from '../components/ui/Card.jsx'
-import EmptyState from '../components/ui/EmptyState.jsx'
-import StatCard from '../components/ui/StatCard.jsx'
 import { usePos } from '../context/PosContext.jsx'
 import {
   formatDateTime,
@@ -39,6 +33,15 @@ import {
   getTopProducts,
 } from '../lib/selectors.js'
 
+function EmptyMessage({ title, description }) {
+  return (
+    <div className="border-t border-slate-100 px-5 py-9 text-center">
+      <p className="text-sm font-semibold text-slate-700">{title}</p>
+      <p className="mt-1 text-sm text-slate-400">{description}</p>
+    </div>
+  )
+}
+
 function DashboardPage() {
   const { database } = usePos()
   const metrics = getDashboardMetrics(database)
@@ -46,287 +49,265 @@ function DashboardPage() {
   const topProducts = getTopProducts(database, 4)
   const lowStockItems = getLowStockItems(database, 4)
   const latestTransactions = getLatestTransactions(database, 5)
+
   const setupTasks = [
     {
       id: 'pin',
-      title: 'Ganti PIN default',
-      description: 'Amankan akses kasir dengan PIN baru di halaman Pengaturan.',
+      title: 'Change the default PIN',
+      description: 'Secure staff access before opening the register.',
       done: database.pin !== '1234',
       href: '/pengaturan',
       icon: KeyRound,
-      tone: 'blue',
     },
     {
       id: 'products',
-      title: 'Tambah produk pertama',
-      description: 'Isi katalog agar kasir siap dipakai oleh staf atau owner.',
+      title: 'Add your first product',
+      description: 'Create the catalog that appears at checkout.',
       done: database.products.length > 0,
       href: '/produk',
       icon: PackagePlus,
-      tone: 'emerald',
     },
     {
       id: 'transaction',
-      title: 'Coba transaksi pertama',
-      description: 'Pastikan alur pembayaran dan struk sudah sesuai kebutuhan toko.',
+      title: 'Run a test transaction',
+      description: 'Verify payments, inventory deduction, and receipts.',
       done: database.transactions.length > 0,
       href: '/kasir',
       icon: Wallet,
-      tone: 'amber',
     },
   ]
   const remainingSetupTasks = setupTasks.filter((task) => !task.done)
+  const completedTaskCount = setupTasks.length - remainingSetupTasks.length
+
+  const workflowSteps = [
+    { number: '01', label: 'Products', href: '/produk' },
+    { number: '02', label: 'Inventory', href: '/stok' },
+    { number: '03', label: 'Point of Sale', href: '/kasir' },
+    { number: '04', label: 'Transactions', href: '/transaksi' },
+    { number: '05', label: 'Reports', href: '/laporan' },
+  ]
+
+  const metricItems = [
+    {
+      label: "Today's sales",
+      value: formatRupiah(metrics.salesToday),
+      detail: `${metrics.transactionCountToday} successful transactions`,
+    },
+    {
+      label: 'Estimated profit',
+      value: formatRupiah(metrics.profitToday),
+      detail: 'Sales minus product cost',
+    },
+    {
+      label: 'Items sold',
+      value: formatQuantity(metrics.itemsSoldToday),
+      detail: 'Units sold today',
+    },
+    {
+      label: 'Low stock',
+      value: String(metrics.lowStockCount),
+      detail: 'Items requiring attention',
+      alert: metrics.lowStockCount > 0,
+    },
+  ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {remainingSetupTasks.length > 0 ? (
-        <Card className="overflow-hidden border-blue-100 bg-[linear-gradient(135deg,#eff6ff,#ffffff)]">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-2xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-700">
-                Mulai dari sini
-              </p>
-              <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900">
-                Sistem sudah siap, tinggal selesaikan langkah awal yang paling penting
+        <section className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-4 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-6">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-blue-600" />
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Getting started</p>
+              </div>
+              <h2 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-slate-950">
+                Finish the essentials before your first day
               </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                Kami sarankan selesaikan checklist ini lebih dulu agar VIGO POS terasa aman,
-                rapi, dan nyaman dipakai sejak hari pertama.
-              </p>
             </div>
-            <div className="rounded-3xl bg-white px-5 py-4 shadow-sm ring-1 ring-blue-100">
-              <p className="text-sm font-semibold text-slate-500">Progress setup awal</p>
-              <p className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900">
-                {setupTasks.length - remainingSetupTasks.length}/{setupTasks.length}
-              </p>
-              <p className="mt-1 text-sm text-slate-500">langkah sudah selesai</p>
+            <div className="flex items-center gap-3">
+              <div className="h-1.5 w-28 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full bg-blue-600" style={{ width: `${(completedTaskCount / setupTasks.length) * 100}%` }} />
+              </div>
+              <span className="text-sm font-semibold tabular-nums text-slate-600">
+                {completedTaskCount}/{setupTasks.length}
+              </span>
             </div>
           </div>
-
-          <div className="mt-6 grid gap-4 xl:grid-cols-3">
+          <div className="divide-y divide-slate-100">
             {setupTasks.map((task) => {
               const Icon = task.icon
-              const toneClasses = {
-                blue: 'bg-blue-50 text-blue-700',
-                emerald: 'bg-emerald-50 text-emerald-700',
-                amber: 'bg-amber-50 text-amber-700',
-              }
-
               return (
-                <div
-                  key={task.id}
-                  className={`rounded-[28px] border px-5 py-5 ${
-                    task.done
-                      ? 'border-emerald-200 bg-emerald-50/70'
-                      : 'border-slate-200 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
-                        task.done ? 'bg-emerald-100 text-emerald-700' : toneClasses[task.tone]
-                      }`}
-                    >
-                      {task.done ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
-                    </div>
-                    <Badge tone={task.done ? 'green' : 'blue'}>
-                      {task.done ? 'Selesai' : 'Perlu dilakukan'}
-                    </Badge>
+                <Link key={task.id} to={task.href} className="group flex items-center gap-4 px-5 py-4 transition hover:bg-slate-50 lg:px-6">
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${task.done ? 'border-emerald-200 bg-emerald-50 text-emerald-600' : 'border-slate-200 bg-white text-slate-500'}`}>
+                    {task.done ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+                  </span>
+                  <div className="min-w-0 flex-1 sm:flex sm:items-center sm:gap-3">
+                    <p className="text-sm font-semibold text-slate-900">{task.title}</p>
+                    <p className="mt-0.5 text-sm text-slate-400 sm:mt-0">{task.description}</p>
                   </div>
-                  <p className="mt-4 text-xl font-bold tracking-tight text-slate-900">{task.title}</p>
-                  <p className="mt-2 text-sm leading-7 text-slate-500">{task.description}</p>
-                  <Link
-                    to={task.href}
-                    className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 transition hover:text-blue-800"
-                  >
-                    {task.done ? 'Tinjau lagi' : 'Buka sekarang'}
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                </div>
+                  <span className="text-xs font-medium text-slate-400">{task.done ? 'Complete' : 'Open'}</span>
+                  <ChevronRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-blue-600" />
+                </Link>
               )
             })}
           </div>
-        </Card>
+        </section>
       ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-4">
-        <StatCard
-          title="Penjualan Hari Ini"
-          value={formatRupiah(metrics.salesToday)}
-          subtitle="Total transaksi sukses hari ini"
-          icon={Landmark}
-          accent="blue"
-        />
-        <StatCard
-          title="Perkiraan Untung"
-          value={formatRupiah(metrics.profitToday)}
-          subtitle="Selisih harga jual dan modal"
-          icon={BarChart3}
-          accent="green"
-        />
-        <StatCard
-          title="Produk Terjual"
-          value={`${formatQuantity(metrics.itemsSoldToday)} item`}
-          subtitle="Akumulasi qty pada transaksi berhasil"
-          icon={ShoppingBag}
-          accent="blue"
-        />
-        <StatCard
-          title="Stok Menipis"
-          value={`${metrics.lowStockCount} produk`}
-          subtitle="Perlu dicek di halaman stok"
-          icon={Boxes}
-          accent="red"
-          className="border-rose-200"
-        />
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.7fr_0.9fr]">
-        <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="section-title text-[1.8rem]">Penjualan 7 Hari Terakhir</h2>
-              <p className="section-subtitle mt-1">Lihat tren pemasukan harian toko Anda.</p>
-            </div>
+      <section className="rounded-[20px] border border-slate-200 bg-white px-5 py-4 shadow-sm lg:px-6">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="shrink-0">
+            <p className="text-sm font-semibold text-slate-900">Store workflow</p>
+            <p className="mt-0.5 text-xs text-slate-400">From catalog setup to business reporting</p>
           </div>
-          <div className="mt-6 h-80">
+          <nav className="flex flex-wrap items-center gap-x-2 gap-y-2" aria-label="Store workflow">
+            {workflowSteps.map((step, index) => (
+              <div key={step.number} className="flex items-center gap-2">
+                <Link to={step.href} className="group inline-flex min-h-9 items-center gap-2 rounded-lg px-2.5 transition hover:bg-slate-50">
+                  <span className="text-[10px] font-semibold tabular-nums text-slate-300">{step.number}</span>
+                  <span className="text-sm font-medium text-slate-600 group-hover:text-blue-700">{step.label}</span>
+                </Link>
+                {index < workflowSteps.length - 1 ? <ChevronRight className="h-3.5 w-3.5 text-slate-300" /> : null}
+              </div>
+            ))}
+          </nav>
+        </div>
+      </section>
+
+      <section className="grid overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm sm:grid-cols-2 xl:grid-cols-4">
+        {metricItems.map((metric, index) => (
+          <div key={metric.label} className={`px-5 py-5 lg:px-6 ${index > 0 ? 'border-t border-slate-200 sm:border-l sm:border-t-0' : ''} ${index === 2 ? 'sm:border-l-0 sm:border-t xl:border-l xl:border-t-0' : ''}`}>
+            <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-400">{metric.label}</p>
+            <p className={`mt-3 text-[1.7rem] font-semibold tracking-[-0.035em] ${metric.alert ? 'text-rose-600' : 'text-slate-950'}`}>
+              {metric.value}
+            </p>
+            <p className="mt-1 text-xs text-slate-400">{metric.detail}</p>
+          </div>
+        ))}
+      </section>
+
+      <div className="grid gap-5 xl:grid-cols-[1.65fr_0.85fr]">
+        <section className="rounded-[20px] border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-start justify-between border-b border-slate-200 px-5 py-5 lg:px-6">
+            <div>
+              <h2 className="text-lg font-semibold tracking-[-0.02em] text-slate-950">Sales trend</h2>
+              <p className="mt-1 text-sm text-slate-400">Revenue over the last seven days</p>
+            </div>
+            <span className="inline-flex items-center gap-2 text-xs font-medium text-slate-400">
+              <span className="h-2 w-2 rounded-full bg-blue-600" /> Revenue
+            </span>
+          </div>
+          <div className="h-[330px] px-3 pb-4 pt-6 sm:px-5">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={salesSeries}>
-                <CartesianGrid stroke="#e2e8f0" strokeDasharray="4 4" />
-                <XAxis dataKey="dayName" stroke="#64748b" />
-                <YAxis
-                  stroke="#64748b"
-                  tickFormatter={(value) => `Rp${Math.round(value / 1000)}k`}
-                />
-                <Tooltip formatter={(value) => formatRupiah(value)} />
-                <Line
-                  type="monotone"
-                  dataKey="total"
-                  stroke="#2563eb"
-                  strokeWidth={4}
-                  dot={{ fill: '#2563eb', r: 4 }}
-                  activeDot={{ r: 7 }}
-                />
+              <LineChart data={salesSeries} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 5" vertical={false} />
+                <XAxis dataKey="dayName" stroke="#94a3b8" tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis stroke="#94a3b8" tickLine={false} axisLine={false} width={52} fontSize={12} tickFormatter={(value) => `Rp${Math.round(value / 1000)}k`} />
+                <Tooltip formatter={(value) => formatRupiah(value)} contentStyle={{ borderRadius: 12, borderColor: '#e2e8f0', boxShadow: '0 10px 30px rgba(15,23,42,.08)' }} />
+                <Line type="monotone" dataKey="total" stroke="#2563eb" strokeWidth={2.5} dot={false} activeDot={{ r: 4, fill: '#2563eb' }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </Card>
+        </section>
 
-        <div className="space-y-6">
-          <Card>
-            <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900">Produk Paling Laku</h2>
-              <Box className="h-6 w-6 text-slate-400" />
+        <div className="space-y-5">
+          <section className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between px-5 py-4">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900">Best sellers</h2>
+                <p className="mt-0.5 text-xs text-slate-400">Products ranked by revenue</p>
+              </div>
+              <ShoppingBag className="h-4 w-4 text-slate-400" />
             </div>
-            <div className="mt-6 space-y-4">
-              {topProducts.length === 0 ? (
-                <EmptyState
-                  title="Belum ada data penjualan"
-                  description="Produk terlaris akan muncul setelah transaksi pertama."
-                />
-              ) : (
-                topProducts.map((product) => (
-                  <div
-                    key={product.productName}
-                    className="flex items-center justify-between rounded-3xl border border-slate-200 p-4"
-                  >
-                    <div>
-                      <p className="font-semibold text-slate-900">{product.productName}</p>
-                      <p className="text-sm text-slate-500">
-                        {formatQuantity(product.quantity)} terjual
-                      </p>
+            {topProducts.length === 0 ? (
+              <EmptyMessage title="No sales data yet" description="Product rankings appear after your first sale." />
+            ) : (
+              <div className="divide-y divide-slate-100 border-t border-slate-100">
+                {topProducts.map((product, index) => (
+                  <div key={product.productName} className="flex items-center gap-3 px-5 py-3.5">
+                    <span className="w-5 text-xs font-semibold tabular-nums text-slate-300">{String(index + 1).padStart(2, '0')}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-slate-800">{product.productName}</p>
+                      <p className="mt-0.5 text-xs text-slate-400">{formatQuantity(product.quantity)} sold</p>
                     </div>
-                    <p className="text-lg font-bold text-blue-700">{formatRupiah(product.revenue)}</p>
+                    <p className="text-sm font-semibold text-slate-700">{formatRupiah(product.revenue)}</p>
                   </div>
-                ))
-              )}
-            </div>
-          </Card>
+                ))}
+              </div>
+            )}
+          </section>
 
-          <Card className="border-rose-200 bg-rose-50/60">
-            <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900">Stok Hampir Habis</h2>
-              <Badge tone="red">Perlu aksi</Badge>
+          <section className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between px-5 py-4">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900">Inventory attention</h2>
+                <p className="mt-0.5 text-xs text-slate-400">Items at or below minimum stock</p>
+              </div>
+              <Boxes className="h-4 w-4 text-slate-400" />
             </div>
-            <div className="mt-6 space-y-3">
-              {lowStockItems.length === 0 ? (
-                <p className="text-sm text-slate-500">Belum ada produk yang mendekati batas minimum.</p>
-              ) : (
-                lowStockItems.map((row) => (
-                  <div
-                    key={row.id}
-                    className="flex items-center justify-between rounded-2xl border border-rose-200 bg-white px-4 py-3"
-                  >
-                    <div>
-                      <p className="font-semibold text-slate-900">{row.productName}</p>
-                      <p className="text-xs text-slate-500">
-                        {row.variantName !== '-' ? row.variantName : row.unitName}
-                      </p>
+            {lowStockItems.length === 0 ? (
+              <EmptyMessage title="Inventory looks healthy" description="Low-stock items will appear here." />
+            ) : (
+              <div className="divide-y divide-slate-100 border-t border-slate-100">
+                {lowStockItems.map((row) => (
+                  <div key={row.id} className="flex items-center gap-3 px-5 py-3.5">
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-rose-500" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-slate-800">{row.productName}</p>
+                      <p className="mt-0.5 text-xs text-slate-400">{row.variantName !== '-' ? row.variantName : row.unitName}</p>
                     </div>
-                    <Badge tone={row.status.tone}>Sisa {formatQuantity(row.stock)}</Badge>
+                    <span className="text-sm font-semibold tabular-nums text-rose-600">{formatQuantity(row.stock)} left</span>
                   </div>
-                ))
-              )}
-            </div>
-          </Card>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
       </div>
 
-      <Card className="overflow-hidden p-0">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+      <section className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-5 lg:px-6">
           <div>
-            <h2 className="section-title text-[1.8rem]">Transaksi Terbaru</h2>
-            <p className="section-subtitle mt-1">Lima transaksi terakhir dari seluruh riwayat.</p>
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-slate-950">Recent transactions</h2>
+            <p className="mt-1 text-sm text-slate-400">Latest completed and cancelled sales</p>
           </div>
+          <Link to="/transaksi" className="inline-flex min-h-10 items-center gap-1.5 text-sm font-medium text-blue-700 hover:text-blue-800">
+            View all <ChevronRight className="h-4 w-4" />
+          </Link>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500">
+          <table className="min-w-full text-left text-sm">
+            <thead className="border-b border-slate-200 bg-slate-50/70 text-[11px] uppercase tracking-[0.06em] text-slate-400">
               <tr>
-                <th className="px-6 py-3 font-semibold">No Transaksi</th>
-                <th className="px-6 py-3 font-semibold">Waktu</th>
-                <th className="px-6 py-3 font-semibold">Metode</th>
-                <th className="px-6 py-3 font-semibold">Total</th>
-                <th className="px-6 py-3 font-semibold">Status</th>
+                <th className="px-5 py-3 font-medium lg:px-6">Transaction</th>
+                <th className="px-5 py-3 font-medium">Date</th>
+                <th className="px-5 py-3 font-medium">Payment</th>
+                <th className="px-5 py-3 font-medium">Amount</th>
+                <th className="px-5 py-3 font-medium">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-slate-100">
               {latestTransactions.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="px-6 py-8">
-                    <EmptyState
-                      title="Belum ada transaksi"
-                      description="Transaksi terbaru akan muncul setelah kasir dipakai."
-                    />
-                  </td>
-                </tr>
+                <tr><td colSpan="5"><EmptyMessage title="No transactions yet" description="Completed sales will appear here automatically." /></td></tr>
               ) : (
-                latestTransactions.map((transaction) => (
-                  <tr key={transaction.id}>
-                    <td className="px-6 py-4 font-semibold text-slate-900">
-                      {transaction.transactionNumber}
-                    </td>
-                    <td className="px-6 py-4 text-slate-600">
-                      {formatDateTime(transaction.createdAt)}
-                    </td>
-                    <td className="px-6 py-4 text-slate-600">
-                      {humanizePaymentMethod(transaction.paymentMethod)}
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-slate-900">
-                      {formatRupiah(transaction.total)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge tone={transaction.status === 'Berhasil' ? 'green' : 'red'}>
-                        {transaction.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))
+                latestTransactions.map((transaction) => {
+                  const successful = ['Successful', 'Berhasil'].includes(transaction.status)
+                  return (
+                    <tr key={transaction.id} className="transition hover:bg-slate-50/70">
+                      <td className="px-5 py-4 font-medium text-slate-900 lg:px-6">{transaction.transactionNumber}</td>
+                      <td className="px-5 py-4 text-slate-500">{formatDateTime(transaction.createdAt)}</td>
+                      <td className="px-5 py-4 text-slate-500">{humanizePaymentMethod(transaction.paymentMethod)}</td>
+                      <td className="px-5 py-4 font-semibold text-slate-800">{formatRupiah(transaction.total)}</td>
+                      <td className="px-5 py-4"><Badge tone={successful ? 'green' : 'red'}>{successful ? 'Successful' : 'Cancelled'}</Badge></td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
         </div>
-      </Card>
+      </section>
     </div>
   )
 }

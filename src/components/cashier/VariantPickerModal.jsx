@@ -4,17 +4,17 @@ import Modal from '../ui/Modal.jsx'
 import { formatQuantity, formatRupiah } from '../../lib/format.js'
 import { getStockStatus } from '../../lib/selectors.js'
 
-function VariantPickerModal({ open, onClose, product, variants, onChoose }) {
+function VariantPickerModal({ open, onClose, product, variants, onChoose, allowOverselling = false }) {
   if (!product) {
     return null
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={`Pilih Varian ${product.name}`} className="max-w-2xl">
+    <Modal open={open} onClose={onClose} title={`Select Variant ${product.name}`} className="max-w-2xl">
       <div className="space-y-4">
         {variants.map((variant) => {
           const status = getStockStatus(variant.stock, variant.minimumStock, true)
-          const isUnavailable = variant.stock <= 0 && product.trackStock
+          const isUnavailable = variant.stock <= 0 && product.trackStock && !allowOverselling
           return (
             <div
               key={variant.id}
@@ -23,10 +23,10 @@ function VariantPickerModal({ open, onClose, product, variants, onChoose }) {
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="text-lg font-bold text-slate-900">{variant.name}</p>
-                  <p className="text-sm text-slate-500">{variant.attributes || 'Varian produk'}</p>
+                  <p className="text-sm text-slate-500">{variant.attributes || 'Product variants'}</p>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <Badge tone={status.tone}>{status.label}</Badge>
-                    <Badge tone="blue">Stok {formatQuantity(variant.stock)}</Badge>
+                    <Badge tone="blue">Stock {formatQuantity(variant.stock)}</Badge>
                   </div>
                 </div>
                 <div className="text-right">
@@ -38,7 +38,7 @@ function VariantPickerModal({ open, onClose, product, variants, onChoose }) {
                     onClick={() => onChoose(variant)}
                     disabled={isUnavailable}
                   >
-                    {isUnavailable ? 'Stok habis' : 'Pilih varian'}
+                    {isUnavailable ? 'Out of stock' : 'Select a variant'}
                   </Button>
                 </div>
               </div>

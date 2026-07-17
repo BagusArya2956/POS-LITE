@@ -9,7 +9,7 @@ function ensureSupabaseReady() {
 
   const client = getSupabaseClient()
   if (!client) {
-    throw new Error('Kredensial Supabase belum lengkap.')
+    throw new Error('Supabase credentials are incomplete.')
   }
 
   return client
@@ -33,7 +33,7 @@ export async function loadCloudDatabase(fallbackDatabase) {
     .maybeSingle()
 
   if (error) {
-    throw new Error(error.message || 'Gagal memuat data dari Supabase.')
+    throw new Error(error.message || 'Failed to load data from Supabase.')
   }
 
   if (!data?.payload) {
@@ -79,7 +79,7 @@ export async function saveCloudDatabase(database) {
   )
 
   if (error) {
-    throw new Error(error.message || 'Gagal menyimpan data ke Supabase.')
+    throw new Error(error.message || 'Failed to save data to Supabase.')
   }
 
   return {

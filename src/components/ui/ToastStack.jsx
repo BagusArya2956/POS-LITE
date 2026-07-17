@@ -42,7 +42,7 @@ function ToastStack({ notifications, onDismiss }) {
                 className="rounded-full px-2 py-1"
                 onClick={() => onDismiss(notification.id)}
               >
-                Tutup
+                Close
               </Button>
             </div>
           </div>

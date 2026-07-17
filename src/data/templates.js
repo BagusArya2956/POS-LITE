@@ -2,41 +2,41 @@ import { createId } from '../lib/helpers.js'
 
 export const BUSINESS_TYPES = [
   'Toko Umum',
-  'Makanan dan Minuman',
-  'Pakaian dan Aksesoris',
-  'Sembako',
-  'Kosmetik',
-  'Alat Tulis',
+  'Food dan Beverages',
+  'Pakaian dan Accessories',
+  'Groceries',
+  'Cosmetics',
+  'Stationery',
   'Sparepart',
-  'Jasa',
+  'Services',
   'Custom',
 ]
 
 export const STOCK_TYPE_OPTIONS = [
   {
     id: 'basic',
-    label: 'Barang biasa',
-    description: 'Produk fisik dengan stok satuan.',
+    label: 'Standard Product',
+    description: 'Physical products with unit-based stock.',
   },
   {
     id: 'variant',
-    label: 'Barang dengan varian',
-    description: 'Produk dengan ukuran, warna, rasa, atau model.',
+    label: 'Product with variants',
+    description: 'Products with sizes, colors, flavors, or models.',
   },
   {
     id: 'weighted',
-    label: 'Barang berdasarkan berat atau volume',
-    description: 'Produk dijual per gram, kg, liter, atau meter.',
+    label: 'Weight or Volume Product',
+    description: 'Products sold by gram, kg, liter, or meter.',
   },
   {
     id: 'package',
-    label: 'Paket',
-    description: 'Produk bundel atau paket hemat.',
+    label: 'Bundle',
+    description: 'Product bundles or value packages.',
   },
   {
     id: 'service',
-    label: 'Jasa tanpa stok',
-    description: 'Layanan tanpa stok fisik.',
+    label: 'Service without inventory',
+    description: 'Services without physical inventory.',
   },
 ]
 
@@ -48,26 +48,26 @@ export const DEFAULT_UNITS = [
   'ml',
   'meter',
   'box',
-  'lusin',
+  'dozen',
   'set',
-  'paket',
+  'bundle',
 ]
 
 const CATEGORY_TEMPLATES = {
-  'Toko Umum': ['Produk Harian', 'Keperluan Rumah', 'Aksesoris', 'Lainnya'],
-  'Makanan dan Minuman': ['Makanan', 'Minuman', 'Snack', 'Paket'],
-  'Pakaian dan Aksesoris': ['Kaos', 'Celana', 'Jaket', 'Aksesoris'],
-  Sembako: ['Beras', 'Minyak', 'Gula', 'Kebutuhan Harian'],
-  Kosmetik: ['Skincare', 'Makeup', 'Haircare', 'Aksesoris'],
-  'Alat Tulis': ['Buku', 'Alat Tulis', 'Printer', 'Lainnya'],
-  Sparepart: ['Mesin', 'Kelistrikan', 'Oli', 'Aksesoris'],
-  Jasa: ['Layanan', 'Paket', 'Kunjungan', 'Lainnya'],
-  Custom: ['Umum'],
+  'Toko Umum': ['Everyday Products', 'Household Essentials', 'Accessories', 'Other'],
+  'Food dan Beverages': ['Food', 'Beverages', 'Snack', 'Bundle'],
+  'Pakaian dan Accessories': ['T-Shirts', 'Pants', 'Jackets', 'Accessories'],
+  Groceries: ['Rice', 'Cooking Oil', 'Sugar', 'Daily Essentials'],
+  Cosmetics: ['Skincare', 'Makeup', 'Haircare', 'Accessories'],
+  'Stationery': ['Books', 'Stationery', 'Printer', 'Other'],
+  Sparepart: ['Engine', 'Electrical', 'Oil', 'Accessories'],
+  Jasa: ['Services', 'Bundle', 'Visits', 'Other'],
+  Custom: ['General'],
 }
 
 export function createCategoryRecords(businessType) {
   const now = new Date().toISOString()
-  const names = CATEGORY_TEMPLATES[businessType] ?? ['Umum']
+  const names = CATEGORY_TEMPLATES[businessType] ?? ['General']
 
   return names.map((name) => ({
     id: createId('cat'),
@@ -128,8 +128,8 @@ export function buildDummyCatalog({ categories, units, stockTypesManaged }) {
       quantity,
       beforeStock: 0,
       afterStock,
-      note: 'Stok awal dari setup toko.',
-      reason: 'Setup awal',
+      note: 'Initial stock from store setup.',
+      reason: 'Initial setup',
       transactionId: '',
       createdAt: now,
     })
@@ -189,7 +189,7 @@ export function buildDummyCatalog({ categories, units, stockTypesManaged }) {
   if (enabledTypes.has('basic')) {
     pushBasicProduct({
       name: 'Air Mineral',
-      categoryNames: ['Produk Harian', 'Minuman', 'Umum'],
+      categoryNames: ['Everyday Products', 'Beverages', 'General'],
       type: 'basic',
       unitName: 'pcs',
       sellPrice: 6000,
@@ -202,7 +202,7 @@ export function buildDummyCatalog({ categories, units, stockTypesManaged }) {
 
     pushBasicProduct({
       name: 'Sabun Cuci',
-      categoryNames: ['Keperluan Rumah', 'Produk Harian', 'Umum'],
+      categoryNames: ['Household Essentials', 'Everyday Products', 'General'],
       type: 'basic',
       unitName: 'pcs',
       sellPrice: 15000,
@@ -215,8 +215,8 @@ export function buildDummyCatalog({ categories, units, stockTypesManaged }) {
 
   if (enabledTypes.has('weighted')) {
     pushBasicProduct({
-      name: 'Beras Premium',
-      categoryNames: ['Beras', 'Produk Harian', 'Kebutuhan Harian', 'Umum'],
+      name: 'Rice Premium',
+      categoryNames: ['Rice', 'Everyday Products', 'Daily Essentials', 'General'],
       type: 'weighted',
       unitName: 'kg',
       sellPrice: 15000,
@@ -229,10 +229,10 @@ export function buildDummyCatalog({ categories, units, stockTypesManaged }) {
 
   if (enabledTypes.has('package')) {
     pushBasicProduct({
-      name: 'Paket Hemat',
-      categoryNames: ['Paket', 'Produk Harian', 'Umum'],
+      name: 'Bundle Hemat',
+      categoryNames: ['Bundle', 'Everyday Products', 'General'],
       type: 'package',
-      unitName: 'paket',
+      unitName: 'bundle',
       sellPrice: 35000,
       costPrice: 25000,
       stock: 18,
@@ -244,12 +244,12 @@ export function buildDummyCatalog({ categories, units, stockTypesManaged }) {
 
   if (enabledTypes.has('variant')) {
     const productId = createId('prd')
-    const categoryId = findCategoryId(categories, ['Aksesoris', 'Kaos', 'Umum'])
+    const categoryId = findCategoryId(categories, ['Accessories', 'T-Shirts', 'General'])
     const unitId = findUnitId(units, 'pcs')
 
     products.push({
       id: productId,
-      name: 'Kaos Basic',
+      name: 'T-Shirts Basic',
       categoryId,
       type: 'variant',
       unitId,
@@ -271,17 +271,17 @@ export function buildDummyCatalog({ categories, units, stockTypesManaged }) {
     const variantSeeds = [
       {
         name: 'Hitam M',
-        attributes: 'Warna Hitam, Ukuran M',
+        attributes: 'Black, Size M',
         stock: 8,
       },
       {
         name: 'Hitam L',
-        attributes: 'Warna Hitam, Ukuran L',
+        attributes: 'Black, Size L',
         stock: 6,
       },
       {
         name: 'Putih M',
-        attributes: 'Warna Putih, Ukuran M',
+        attributes: 'White, Size M',
         stock: 5,
       },
     ]
@@ -304,7 +304,7 @@ export function buildDummyCatalog({ categories, units, stockTypesManaged }) {
 
       createMovement({
         productId,
-        productName: 'Kaos Basic',
+        productName: 'T-Shirts Basic',
         unitName: 'pcs',
         quantity: variantSeed.stock,
         afterStock: variantSeed.stock,
@@ -317,7 +317,7 @@ export function buildDummyCatalog({ categories, units, stockTypesManaged }) {
   if (enabledTypes.has('service')) {
     pushBasicProduct({
       name: 'Laundry 1 Kg',
-      categoryNames: ['Layanan', 'Umum', 'Paket'],
+      categoryNames: ['Services', 'General', 'Bundle'],
       type: 'service',
       unitName: 'kg',
       sellPrice: 8000,

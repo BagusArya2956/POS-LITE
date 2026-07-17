@@ -22,7 +22,7 @@ async function shareReceipt(payload) {
   }
 
   await navigator.clipboard.writeText(receiptText)
-  window.alert('Teks struk berhasil disalin ke clipboard.')
+  window.alert('Receipt text copied to the clipboard.')
 }
 
 function TransactionDetailModal({ open, onClose, transaction, items, storeSettings }) {
@@ -40,7 +40,7 @@ function TransactionDetailModal({ open, onClose, transaction, items, storeSettin
     <Modal
       open={open}
       onClose={onClose}
-      title="Detail Transaksi"
+      title="Transaction Details"
       className="max-w-6xl"
       contentClassName="p-0"
     >
@@ -53,31 +53,31 @@ function TransactionDetailModal({ open, onClose, transaction, items, storeSettin
             </div>
             <div
               className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                transaction.status === 'Berhasil'
+                ['Successful', 'Berhasil'].includes(transaction.status)
                   ? 'bg-emerald-50 text-emerald-700'
                   : 'bg-rose-50 text-rose-700'
               }`}
             >
-              {transaction.status}
+              {['Successful', 'Berhasil'].includes(transaction.status) ? 'Successful' : 'Cancelled'}
             </div>
           </div>
 
           <div className="mt-6 rounded-3xl border border-slate-200 p-5">
-            <h3 className="text-lg font-bold text-slate-900">Informasi Pembayaran</h3>
+            <h3 className="text-lg font-bold text-slate-900">Payment Information</h3>
             <div className="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-2">
               <div>
-                <p className="text-slate-400">Metode Pembayaran</p>
+                <p className="text-slate-400">Payment Method</p>
                 <p className="mt-1 font-semibold text-slate-900">
                   {humanizePaymentMethod(transaction.paymentMethod)}
                 </p>
               </div>
               <div>
-                <p className="text-slate-400">Kasir</p>
+                <p className="text-slate-400">POS</p>
                 <p className="mt-1 font-semibold text-slate-900">{transaction.cashierName}</p>
               </div>
               {transaction.paymentReference ? (
                 <div className="md:col-span-2">
-                  <p className="text-slate-400">Referensi Pembayaran</p>
+                  <p className="text-slate-400">Payment Reference</p>
                   <p className="mt-1 break-all font-semibold text-slate-900">
                     {transaction.paymentReference}
                   </p>
@@ -90,9 +90,9 @@ function TransactionDetailModal({ open, onClose, transaction, items, storeSettin
             <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
               <thead className="bg-slate-50 text-slate-500">
                 <tr>
-                  <th className="px-5 py-3 font-semibold">Produk</th>
+                  <th className="px-5 py-3 font-semibold">Products</th>
                   <th className="px-5 py-3 font-semibold">Qty</th>
-                  <th className="px-5 py-3 font-semibold">Harga</th>
+                  <th className="px-5 py-3 font-semibold">Price</th>
                   <th className="px-5 py-3 font-semibold text-right">Total</th>
                 </tr>
               </thead>
@@ -122,7 +122,7 @@ function TransactionDetailModal({ open, onClose, transaction, items, storeSettin
                 <span>{formatRupiah(transaction.subtotal)}</span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>Diskon</span>
+                <span>Discount</span>
                 <span>{formatRupiah(transaction.discount)}</span>
               </div>
               <div className="flex justify-between text-lg font-bold text-blue-700">
@@ -134,7 +134,7 @@ function TransactionDetailModal({ open, onClose, transaction, items, storeSettin
         </div>
 
         <div className="bg-slate-100 p-6">
-          <h3 className="text-2xl font-bold text-slate-900">Preview Struk</h3>
+          <h3 className="text-2xl font-bold text-slate-900">Receipt Preview</h3>
           <div className="mt-5">
             <ReceiptPreview transaction={transaction} items={items} storeSettings={storeSettings} />
           </div>

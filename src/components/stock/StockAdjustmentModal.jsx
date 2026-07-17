@@ -34,7 +34,7 @@ function StockAdjustmentModal({
       variantId: initialSelection?.variantId || '',
       quantity: 0,
       note: '',
-      reason: mode === 'out' ? 'Penyesuaian manual' : 'Restok manual',
+      reason: mode === 'out' ? 'Manual adjustment' : 'Manual restock',
     })
   }, [initialSelection, mode, open])
 
@@ -58,12 +58,12 @@ function StockAdjustmentModal({
     event.preventDefault()
 
     if (!selectedProduct) {
-      window.alert('Pilih produk terlebih dahulu.')
+      window.alert('Select a product first.')
       return
     }
 
     if (requiresVariantSelection && !form.variantId) {
-      window.alert('Pilih varian terlebih dahulu untuk mengubah stok produk ini.')
+      window.alert("Select a variant before adjusting this product's stock.")
       return
     }
 
@@ -77,12 +77,12 @@ function StockAdjustmentModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={mode === 'in' ? 'Tambah Stok' : 'Kurangi Stok'}
+      title={mode === 'in' ? 'Add Stock' : 'Remove Stock'}
       className="max-w-2xl"
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
-          <label className="form-label">Pilih Produk</label>
+          <label className="form-label">Select Product</label>
           <select
             className="form-select"
             value={form.productId}
@@ -94,7 +94,7 @@ function StockAdjustmentModal({
               }))
             }
           >
-            <option value="">Cari dan pilih produk...</option>
+            <option value="">Search and select a product...</option>
             {products
               .filter((product) => product.trackStock)
               .map((product) => (
@@ -107,7 +107,7 @@ function StockAdjustmentModal({
 
         {productVariants.length > 0 ? (
           <div>
-            <label className="form-label">Pilih Varian</label>
+            <label className="form-label">Select Variant</label>
             <select
               className="form-select"
               value={form.variantId}
@@ -118,7 +118,7 @@ function StockAdjustmentModal({
                 }))
               }
             >
-              <option value="">Pilih varian</option>
+              <option value="">Select a variant</option>
               {productVariants.map((variant) => (
                 <option key={variant.id} value={variant.id}>
                   {variant.name}
@@ -126,7 +126,7 @@ function StockAdjustmentModal({
               ))}
             </select>
             <p className="mt-2 text-xs text-slate-500">
-              Produk varian harus dipilih per varian agar stoknya akurat.
+              Select a specific variant to keep inventory accurate.
             </p>
           </div>
         ) : null}
@@ -134,7 +134,7 @@ function StockAdjustmentModal({
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="form-label">
-              {mode === 'in' ? 'Jumlah masuk' : 'Jumlah keluar'}
+              {mode === 'in' ? 'Quantity in' : 'Quantity out'}
             </label>
             <input
               type="number"
@@ -151,7 +151,7 @@ function StockAdjustmentModal({
             />
           </div>
           <div>
-            <label className="form-label">Alasan</label>
+            <label className="form-label">Reason</label>
             <input
               className="form-input"
               value={form.reason}
@@ -161,13 +161,13 @@ function StockAdjustmentModal({
                   reason: event.target.value,
                 }))
               }
-              placeholder="Mis. stok opname, retur, supplier"
+              placeholder="E.g. stock count, return, supplier"
             />
           </div>
         </div>
 
         <div>
-          <label className="form-label">Catatan</label>
+          <label className="form-label">Notes</label>
           <textarea
             className="form-textarea"
             value={form.note}
@@ -179,16 +179,16 @@ function StockAdjustmentModal({
             }
             placeholder={
               mode === 'in'
-                ? 'Misal: barang masuk dari supplier PT Maju Jaya'
-                : 'Misal: rusak, hilang, atau penyesuaian stok'
+                ? 'Example: goods received from supplier'
+                : 'Example: damaged, lost, or stock adjustment'
             }
           />
         </div>
 
         <div className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">
           <p>
-            Stok sekarang:{' '}
-            {currentStock === null ? 'Pilih varian terlebih dahulu' : formatQuantity(currentStock)}
+            Current stock:{' '}
+            {currentStock === null ? 'Select a variant first' : formatQuantity(currentStock)}
           </p>
           <p
             className={
@@ -197,17 +197,17 @@ function StockAdjustmentModal({
                 : 'mt-1 font-semibold text-slate-900'
             }
           >
-            Stok setelah penyesuaian:{' '}
+            Stock after adjustment:{' '}
             {nextStock === null ? '-' : formatQuantity(nextStock)}
           </p>
         </div>
 
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={onClose}>
-            Batal
+            Cancel
           </Button>
           <Button type="submit" variant={mode === 'in' ? 'primary' : 'danger'}>
-            {mode === 'in' ? 'Simpan stok' : 'Simpan pengurangan'}
+            {mode === 'in' ? 'Save stock' : 'Save adjustment'}
           </Button>
         </div>
       </form>

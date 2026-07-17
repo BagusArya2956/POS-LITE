@@ -28,15 +28,15 @@ function ReceiptPreview({ transaction, items, storeSettings }) {
           <span>{transaction.transactionNumber}</span>
         </div>
         <div className="flex justify-between gap-4">
-          <span>Tanggal:</span>
+          <span>Date:</span>
           <span>{formatDateTime(transaction.createdAt)}</span>
         </div>
         <div className="flex justify-between gap-4">
-          <span>Kasir:</span>
+          <span>Cashier:</span>
           <span>{transaction.cashierName}</span>
         </div>
         <div className="flex justify-between gap-4">
-          <span>Metode:</span>
+          <span>Method:</span>
           <span>{humanizePaymentMethod(transaction.paymentMethod)}</span>
         </div>
       </div>
@@ -68,7 +68,7 @@ function ReceiptPreview({ transaction, items, storeSettings }) {
           <span>{formatRupiah(transaction.subtotal)}</span>
         </div>
         <div className="flex justify-between gap-4">
-          <span>Diskon</span>
+          <span>Discount</span>
           <span>{formatRupiah(transaction.discount)}</span>
         </div>
         <div className="flex justify-between gap-4 font-bold text-slate-900">
@@ -81,7 +81,7 @@ function ReceiptPreview({ transaction, items, storeSettings }) {
 
       <p className="whitespace-pre-line text-center text-xs text-slate-500">
         {storeSettings?.receiptFooter ||
-          'Terima kasih atas kunjungan Anda.\nBarang yang sudah dibeli tidak dapat ditukar atau dikembalikan.'}
+          'Thank you for shopping with us.\nPurchased items cannot be exchanged or returned.'}
       </p>
     </div>
   )

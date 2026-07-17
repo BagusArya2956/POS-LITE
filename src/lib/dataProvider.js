@@ -45,7 +45,7 @@ export function getPersistenceMeta() {
       provider,
       label: 'Browser lokal',
       description:
-        'Data disimpan di browser ini saja. Cocok untuk revisi cepat dan uji coba fitur.',
+        'Data is stored only in this browser. Ideal for quick revisions and feature testing.',
       remoteEnabled: false,
       configured: false,
     }
@@ -55,9 +55,9 @@ export function getPersistenceMeta() {
     return {
       appMode,
       provider,
-      label: 'Supabase belum diaktifkan',
+      label: 'Supabase is not enabled',
       description:
-        'Adapter cloud yang ada sekarang sengaja dibatasi untuk mode staging agar data produksi tidak tersentuh lebih awal.',
+        'The cloud adapter is intentionally limited to staging to protect production data.',
       remoteEnabled: false,
       configured: hasSupabaseConfig(),
     }
@@ -67,9 +67,9 @@ export function getPersistenceMeta() {
     return {
       appMode,
       provider,
-      label: 'Supabase belum siap',
+      label: 'Supabase is not ready',
       description:
-        'Mode cloud dipilih, tetapi URL, anon key, atau instance key belum diisi lengkap.',
+        'Cloud mode is selected, but the URL, anon key, or instance key is incomplete.',
       remoteEnabled: false,
       configured: false,
     }
@@ -81,8 +81,8 @@ export function getPersistenceMeta() {
     label: appMode === 'production' ? 'Supabase' : 'Supabase staging',
     description:
       appMode === 'production'
-        ? 'Data utama diarahkan ke Supabase. Gunakan hanya saat alur sudah benar-benar stabil.'
-        : 'Data utama diarahkan ke Supabase staging untuk pengujian aman sebelum produksi.',
+        ? 'Primary data is sent to Supabase. Use this only when the workflow is stable.'
+        : 'Primary data is sent to Supabase staging for safe pre-production testing.',
     remoteEnabled: true,
     configured: true,
   }

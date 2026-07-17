@@ -115,7 +115,7 @@ export function buildReceiptText({ transaction, items, storeSettings }) {
   const whatsapp = storeSettings?.receiptWhatsApp || storeSettings?.whatsapp || '-'
   const footer =
     storeSettings?.receiptFooter ||
-    'Terima kasih atas kunjungan Anda.\nBarang yang sudah dibeli tidak dapat ditukar atau dikembalikan.'
+    'Thank you for shopping with us.\nPurchased items cannot be exchanged or returned.'
 
   const itemLines = items.flatMap((item) => {
     const firstLine = `${item.productName}${item.variantName ? ` (${item.variantName})` : ''}`
@@ -128,9 +128,9 @@ export function buildReceiptText({ transaction, items, storeSettings }) {
     address,
     `WhatsApp: ${whatsapp}`,
     '--------------------------------',
-    `No Transaksi : ${transaction.transactionNumber}`,
+    `Transaction No. : ${transaction.transactionNumber}`,
     `Tanggal      : ${formatDateTime(transaction.createdAt)}`,
-    `Kasir        : ${transaction.cashierName}`,
+    `Cashier      : ${transaction.cashierName}`,
     `Metode       : ${humanizePaymentMethod(transaction.paymentMethod)}`,
     '--------------------------------',
     ...itemLines,
@@ -148,14 +148,14 @@ export function printReceipt(payload) {
   const popup = window.open('', '_blank', 'width=420,height=720')
 
   if (!popup) {
-    window.alert('Popup diblokir browser. Izinkan popup untuk mencetak struk.')
+    window.alert('Pop-ups are blocked. Allow pop-ups to print receipts.')
     return
   }
 
   popup.document.write(`
     <html>
       <head>
-        <title>Cetak Struk VIGO POS</title>
+        <title>Print VIGO POS Receipt</title>
         <style>
           body {
             font-family: "Courier New", monospace;

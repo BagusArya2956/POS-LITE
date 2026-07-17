@@ -158,17 +158,22 @@ function CashierPage() {
       return
     }
 
-    if (product.trackStock && availableStock <= 0) {
-      window.alert('Stok produk habis dan tidak bisa ditambahkan ke keranjang.')
+    const allowOverselling = Boolean(
+      database.storeSettings?.inventoryPreferences?.allowOverselling,
+    )
+
+    if (product.trackStock && availableStock <= 0 && !allowOverselling) {
+      window.alert('This product is out of stock and cannot be added to the cart.')
       return
     }
 
     if (
       product.trackStock &&
+      !allowOverselling &&
       existingCartItem &&
       existingCartItem.qty + quantity > availableStock
     ) {
-      window.alert('Jumlah di keranjang sudah melebihi stok yang tersedia.')
+      window.alert('Cart quantity exceeds available stock.')
       return
     }
 
@@ -253,8 +258,12 @@ function CashierPage() {
         return current.filter((item) => item.cartKey !== cartKey)
       }
 
-      if (product?.trackStock && normalizedQuantity > availableStock) {
-        window.alert('Jumlah melebihi stok yang tersedia.')
+      if (
+        product?.trackStock &&
+        normalizedQuantity > availableStock &&
+        !database.storeSettings?.inventoryPreferences?.allowOverselling
+      ) {
+        window.alert('Quantity exceeds available stock.')
         return current
       }
 
@@ -271,12 +280,12 @@ function CashierPage() {
 
   async function handleCheckout() {
     if (activePayments.length === 0) {
-      window.alert('Aktifkan minimal satu metode pembayaran di halaman Pengaturan.')
+      window.alert('Enable at least one payment method in Settings.')
       return
     }
 
     if (cartItems.length === 0) {
-      window.alert('Keranjang masih kosong. Tambahkan produk terlebih dahulu.')
+      window.alert('The cart is empty. Add a product first.')
       return
     }
 
@@ -305,11 +314,11 @@ function CashierPage() {
         })
         setQrisModalOpen(true)
         notify(
-          'QRIS dibuat',
-          'Tampilkan QR ke pelanggan dan tunggu status pembayaran berhasil.',
+          'QRIS created',
+          'Show the QR code to the customer and wait for payment confirmation.',
         )
       } catch (error) {
-        window.alert(error.message || 'Gagal membuat QRIS Midtrans.')
+        window.alert(error.message || 'Failed to create a Midtrans QRIS payment.')
       }
       return
     }
@@ -350,7 +359,7 @@ function CashierPage() {
           : current,
       )
     } catch (error) {
-      setQrisError(error.message || 'Gagal memeriksa status QRIS.')
+      setQrisError(error.message || 'Failed to check QRIS status.')
     } finally {
       setQrisChecking(false)
     }
@@ -385,8 +394,8 @@ function CashierPage() {
   }
 
   const categoryTabs = [
-    { id: 'all', label: 'Semua' },
-    { id: 'favorites', label: 'Favorit' },
+    { id: 'all', label: 'All' },
+    { id: 'favorites', label: 'Favorites' },
     ...database.categories.map((category) => ({
       id: category.id,
       label: category.name,
@@ -402,14 +411,14 @@ function CashierPage() {
               <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input
                 className="form-input pl-12"
-                placeholder="Cari produk..."
+                placeholder="Search products..."
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
             </div>
             <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
               <Store className="h-4 w-4" />
-              Toko aktif dan siap transaksi
+              Store active and ready for transactions
             </div>
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
@@ -432,8 +441,8 @@ function CashierPage() {
           {displayedProducts.length === 0 ? (
             <div className="md:col-span-2 2xl:col-span-3">
               <EmptyState
-                title="Produk belum ditemukan"
-                description="Coba ganti pencarian, kategori, atau tambahkan produk baru."
+                title="No products found"
+                description="Try changing the search, category, or add a new product."
               />
             </div>
           ) : (
@@ -448,7 +457,10 @@ function CashierPage() {
               const unitName = getUnitName(database.units, product.unitId)
               const needsQuantityPrompt =
                 product.type === 'weighted' || product.type === 'service'
-              const isUnavailable = product.trackStock && (currentStock || 0) <= 0
+              const isUnavailable =
+                product.trackStock &&
+                (currentStock || 0) <= 0 &&
+                !database.storeSettings?.inventoryPreferences?.allowOverselling
 
               return (
                 <button
@@ -475,8 +487,8 @@ function CashierPage() {
                       <Badge tone="blue">
                         {getCategoryName(database.categories, product.categoryId)}
                       </Badge>
-                      {product.type === 'variant' ? <Badge tone="slate">Varian</Badge> : null}
-                      {!product.trackStock ? <Badge tone="green">Tanpa stok</Badge> : null}
+                      {product.type === 'variant' ? <Badge tone="slate">Variant</Badge> : null}
+                      {!product.trackStock ? <Badge tone="green">No inventory</Badge> : null}
                     </div>
                     <div>
                       <p className="text-xl font-bold text-slate-900">{product.name}</p>
@@ -489,18 +501,18 @@ function CashierPage() {
                         {formatRupiah(product.sellPrice)}
                       </p>
                       <Badge tone={status.tone}>
-                        {product.trackStock ? `Stok ${formatQuantity(currentStock)}` : status.label}
+                        {product.trackStock ? `Stock ${formatQuantity(currentStock)}` : status.label}
                       </Badge>
                     </div>
                     {needsQuantityPrompt ? (
                       <div className="flex items-center gap-2 text-sm text-slate-500">
                         <ClipboardList className="h-4 w-4" />
-                        Atur jumlah sebelum masuk keranjang
+                        Set the quantity before adding to the cart
                       </div>
                     ) : null}
                     {isUnavailable ? (
                       <p className="text-sm font-semibold text-rose-600">
-                        Produk stok habis tidak bisa dijual.
+                        Out-of-stock products cannot be sold.
                       </p>
                     ) : null}
                   </div>
@@ -516,8 +528,8 @@ function CashierPage() {
           <div className="flex items-center gap-3">
             <ShoppingCart className="h-6 w-6 text-blue-700" />
             <div>
-              <p className="text-2xl font-bold text-slate-900">Keranjang</p>
-              <p className="text-sm text-slate-500">{cartItems.length} item aktif</p>
+              <p className="text-2xl font-bold text-slate-900">Cart</p>
+              <p className="text-sm text-slate-500">{cartItems.length} active items</p>
             </div>
           </div>
         </div>
@@ -525,8 +537,8 @@ function CashierPage() {
         <div className="space-y-4 p-5">
           {cartItems.length === 0 ? (
             <EmptyState
-              title="Keranjang masih kosong"
-              description="Pilih produk dari katalog untuk mulai transaksi."
+              title="Your cart is empty"
+              description="Select a product from the catalog to start a transaction."
             />
           ) : (
             cartItems.map((item) => (
@@ -587,7 +599,7 @@ function CashierPage() {
                         })
                       }
                     >
-                      Ubah qty
+                      Edit qty
                     </Button>
                   ) : null}
                 </div>
@@ -603,7 +615,7 @@ function CashierPage() {
               <span className="font-semibold text-slate-900">{formatRupiah(cartSubtotal)}</span>
             </div>
             <div className="grid gap-3">
-              <label className="form-label mb-0">Diskon</label>
+              <label className="form-label mb-0">Discount</label>
               <input
                 type="number"
                 className="form-input"
@@ -612,7 +624,7 @@ function CashierPage() {
               />
             </div>
             <div className="flex items-center justify-between border-t border-slate-200 pt-3">
-              <span className="text-base font-semibold text-slate-700">Total Bayar</span>
+              <span className="text-base font-semibold text-slate-700">Total Due</span>
               <span className="text-3xl font-extrabold text-blue-700">
                 {formatRupiah(cartTotal)}
               </span>
@@ -620,7 +632,7 @@ function CashierPage() {
           </div>
 
           <div>
-            <p className="form-label">Metode pembayaran</p>
+            <p className="form-label">Payment method</p>
             <div className="grid grid-cols-2 gap-3">
               {activePayments.map((method) => (
                 <button
@@ -641,7 +653,7 @@ function CashierPage() {
             </div>
             {activePayments.length === 0 ? (
               <p className="mt-3 text-sm font-semibold text-rose-600">
-                Belum ada metode pembayaran aktif. Atur dulu di Pengaturan.
+                No payment methods are enabled. Configure them in Settings.
               </p>
             ) : null}
           </div>
@@ -653,16 +665,16 @@ function CashierPage() {
             onClick={handleCheckout}
             disabled={activePayments.length === 0}
           >
-            Selesaikan Pembayaran
+            Complete Payment
           </Button>
           <p className="text-xs text-slate-500">
             {paymentMethod === 'qris' && qrisGatewayEnabled
-              ? 'Untuk QRIS, transaksi disimpan setelah status pembayaran berhasil dari gateway.'
-              : 'Stok akan otomatis berkurang setelah transaksi berhasil disimpan.'}
+              ? 'QRIS transactions are saved after the payment gateway confirms payment.'
+              : 'Inventory is reduced automatically after the transaction is saved.'}
           </p>
           {paymentMethod === 'qris' && !qrisGatewayEnabled ? (
             <p className="text-xs font-semibold text-amber-600">
-              QRIS gateway belum aktif. Saat ini QRIS masih diperlakukan seperti metode manual.
+              The QRIS gateway is not active. QRIS is currently treated as a manual payment method.
             </p>
           ) : null}
         </div>
@@ -674,6 +686,9 @@ function CashierPage() {
         variants={
           selectedProduct ? getVariantsForProduct(database.variants, selectedProduct.id) : []
         }
+        allowOverselling={Boolean(
+          database.storeSettings?.inventoryPreferences?.allowOverselling,
+        )}
         onClose={() => setSelectedProduct(null)}
         onChoose={(variant) => {
           addToCart(selectedProduct, variant)
@@ -701,6 +716,9 @@ function CashierPage() {
                 )
             : null
         }
+        allowOverselling={Boolean(
+          database.storeSettings?.inventoryPreferences?.allowOverselling,
+        )}
         onClose={() =>
           setQuantityModal({
             productId: '',

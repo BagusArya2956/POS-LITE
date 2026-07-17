@@ -1,22 +1,49 @@
 const DB_KEY = 'poslite::db'
 const SESSION_KEY = 'poslite::session'
 export const CURRENT_DB_VERSION = 3
+const LEGACY_ENGLISH_NAMES = {
+  'Produk Harian': 'Everyday Products',
+  'Keperluan Rumah': 'Household Essentials',
+  Aksesoris: 'Accessories',
+  Makanan: 'Food',
+  Minuman: 'Beverages',
+  Paket: 'Bundles',
+  Kaos: 'T-Shirts',
+  Celana: 'Pants',
+  Jaket: 'Jackets',
+  Beras: 'Rice',
+  Minyak: 'Cooking Oil',
+  Gula: 'Sugar',
+  'Kebutuhan Harian': 'Daily Essentials',
+  Layanan: 'Services',
+  Kunjungan: 'Visits',
+  lusin: 'dozen',
+  paket: 'bundle',
+}
 const defaultStoreSettings = {
   storeName: '',
   address: '',
   whatsapp: '',
   logo: '',
   businessType: 'Toko Umum',
+  businessVariant: '',
+  salesMode: 'counter',
   stockTypesManaged: ['basic'],
   receiptName: '',
   receiptAddress: '',
   receiptWhatsApp: '',
   receiptFooter:
-    'Terima kasih atas kunjungan Anda.\nBarang yang sudah dibeli tidak dapat ditukar atau dikembalikan.',
+    'Thank you for shopping with us.\nPurchased items cannot be exchanged or returned.',
   paymentMethods: {
     cash: true,
     qris: true,
     transfer: false,
+  },
+  inventoryPreferences: {
+    defaultUnitId: '',
+    defaultMinimumStock: 5,
+    autoGenerateSku: true,
+    allowOverselling: false,
   },
   cashierName: 'Admin',
   createdAt: '',
@@ -25,15 +52,15 @@ const defaultStoreSettings = {
 const LEGACY_DEMO_PRODUCT_SIGNATURES = new Set([
   'Air Mineral::AIR-6000::basic',
   'Sabun Cuci::SBN-15000::basic',
-  'Beras Premium::BRS-15K::weighted',
-  'Paket Hemat::PKT-35K::package',
-  'Kaos Basic::KAOS-BASIC::variant',
+  'Rice Premium::BRS-15K::weighted',
+  'Bundle Hemat::PKT-35K::package',
+  'T-Shirts Basic::KAOS-BASIC::variant',
   'Laundry 1 Kg::SRV-LAUNDRY::service',
 ])
 const LEGACY_DEMO_VARIANT_SIGNATURES = new Set([
-  'Kaos Basic::Hitam M::KAOS-BSC-1',
-  'Kaos Basic::Hitam L::KAOS-BSC-2',
-  'Kaos Basic::Putih M::KAOS-BSC-3',
+  'T-Shirts Basic::Hitam M::KAOS-BSC-1',
+  'T-Shirts Basic::Hitam L::KAOS-BSC-2',
+  'T-Shirts Basic::Putih M::KAOS-BSC-3',
 ])
 
 export const emptyDatabase = {
@@ -139,11 +166,21 @@ export function normalizeDatabase(value) {
             ...defaultStoreSettings.paymentMethods,
             ...(rawStoreSettings.paymentMethods || {}),
           },
+          inventoryPreferences: {
+            ...defaultStoreSettings.inventoryPreferences,
+            ...(rawStoreSettings.inventoryPreferences || {}),
+          },
         }
       : null,
     pin: /^\d{4}$/.test(String(parsed.pin ?? '')) ? String(parsed.pin) : emptyDatabase.pin,
-    categories: normalizeArray(parsed.categories),
-    units: normalizeArray(parsed.units),
+    categories: normalizeArray(parsed.categories).map((category) => ({
+      ...category,
+      name: LEGACY_ENGLISH_NAMES[category.name] || category.name,
+    })),
+    units: normalizeArray(parsed.units).map((unit) => ({
+      ...unit,
+      name: LEGACY_ENGLISH_NAMES[unit.name] || unit.name,
+    })),
     products: shouldClearLegacyDemo ? [] : normalizedProducts,
     variants: shouldClearLegacyDemo ? [] : normalizedVariants,
     stockMovements: shouldClearLegacyDemo ? [] : normalizeArray(parsed.stockMovements),
@@ -161,7 +198,7 @@ export function loadDatabase() {
 
     return normalizeDatabase(JSON.parse(raw))
   } catch (error) {
-    console.error('Gagal memuat database POSLite', error)
+    console.error('Failed to load the POSLite database', error)
     return emptyDatabase
   }
 }
@@ -194,7 +231,7 @@ export function loadSession() {
       ...(parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}),
     }
   } catch (error) {
-    console.error('Gagal memuat sesi POSLite', error)
+    console.error('Failed to load the POSLite session', error)
     return defaultSession
   }
 }

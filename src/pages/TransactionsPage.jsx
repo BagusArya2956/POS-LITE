@@ -69,7 +69,7 @@ function TransactionsPage() {
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input
               className="form-input pl-12"
-              placeholder="Cari nomor transaksi..."
+              placeholder="Search transaction number..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -98,13 +98,13 @@ function TransactionsPage() {
           <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
-                <th className="px-6 py-4 font-semibold">No Transaksi</th>
-                <th className="px-6 py-4 font-semibold">Tanggal</th>
-                <th className="px-6 py-4 font-semibold">Jumlah Item</th>
-                <th className="px-6 py-4 font-semibold">Metode Pembayaran</th>
+                <th className="px-6 py-4 font-semibold">Transaction No.</th>
+                <th className="px-6 py-4 font-semibold">Date</th>
+                <th className="px-6 py-4 font-semibold">Item Count</th>
+                <th className="px-6 py-4 font-semibold">Payment Method</th>
                 <th className="px-6 py-4 font-semibold">Total</th>
                 <th className="px-6 py-4 font-semibold">Status</th>
-                <th className="px-6 py-4 font-semibold text-right">Aksi</th>
+                <th className="px-6 py-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -112,8 +112,8 @@ function TransactionsPage() {
                 <tr>
                   <td colSpan="7" className="px-6 py-8">
                     <EmptyState
-                      title="Belum ada transaksi"
-                      description="Transaksi yang sesuai filter akan tampil di sini."
+                      title="No transactions yet"
+                      description="Transactions matching your filters will appear here."
                     />
                   </td>
                 </tr>
@@ -144,8 +144,8 @@ function TransactionsPage() {
                         {formatRupiah(transaction.total)}
                       </td>
                       <td className="px-6 py-4">
-                        <Badge tone={transaction.status === 'Berhasil' ? 'green' : 'red'}>
-                          {transaction.status}
+                        <Badge tone={['Successful', 'Berhasil'].includes(transaction.status) ? 'green' : 'red'}>
+                          {['Successful', 'Berhasil'].includes(transaction.status) ? 'Successful' : 'Cancelled'}
                         </Badge>
                       </td>
                       <td className="px-6 py-4">
@@ -155,7 +155,7 @@ function TransactionsPage() {
                             size="sm"
                             onClick={() => setActiveTransactionId(transaction.id)}
                           >
-                            Detail
+                            Details
                           </Button>
                           <Button variant="secondary" size="sm" onClick={() => printReceipt(payload)}>
                             <Printer className="h-4 w-4" />
@@ -163,11 +163,11 @@ function TransactionsPage() {
                           <Button
                             variant="danger"
                             size="sm"
-                            disabled={transaction.status === 'Dibatalkan'}
+                            disabled={['Cancelled', 'Dibatalkan'].includes(transaction.status)}
                             onClick={() => {
                               if (
                                 window.confirm(
-                                  `Batalkan transaksi ${transaction.transactionNumber}? Stok akan dikembalikan.`,
+                                  `Cancel transaction ${transaction.transactionNumber}? Inventory will be restored.`,
                                 )
                               ) {
                                 const result = cancelTransaction(transaction.id)

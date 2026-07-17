@@ -20,27 +20,27 @@ export function getVariantsForProduct(variants, productId) {
 export function getStockStatus(stock, minimumStock, trackStock) {
   if (!trackStock) {
     return {
-      label: 'Tanpa stok',
+      label: 'No inventory',
       tone: 'slate',
     }
   }
 
   if (stock <= 0) {
     return {
-      label: 'Stok habis',
+      label: 'Out of stock',
       tone: 'red',
     }
   }
 
   if (stock <= minimumStock) {
     return {
-      label: 'Stok menipis',
+      label: 'Low stock',
       tone: 'amber',
     }
   }
 
   return {
-    label: 'Aman',
+    label: 'Healthy',
     tone: 'green',
   }
 }
@@ -117,7 +117,7 @@ export function flattenStockRows(database) {
       productId: product.id,
       variantId: '',
       productName: product.name,
-      variantName: product.trackStock ? '-' : 'Jasa / tanpa stok',
+      variantName: product.trackStock ? '-' : 'Service / no inventory',
       categoryName,
       unitName,
       sku: product.sku || '-',
@@ -138,7 +138,9 @@ export function flattenStockRows(database) {
 }
 
 export function getSuccessfulTransactions(database) {
-  return database.transactions.filter((transaction) => transaction.status === 'Berhasil')
+  return database.transactions.filter((transaction) =>
+    ['Successful', 'Berhasil'].includes(transaction.status),
+  )
 }
 
 export function getTransactionItems(database, transactionId) {
@@ -179,7 +181,7 @@ export function getSalesSeries(database, days = 7) {
     const cursor = new Date(now)
     cursor.setDate(now.getDate() - index)
     const key = getDateKey(cursor)
-    const dayName = new Intl.DateTimeFormat('id-ID', { weekday: 'short' }).format(cursor)
+    const dayName = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(cursor)
 
     const total = successfulTransactions
       .filter((transaction) => getDateKey(transaction.createdAt) === key)
@@ -273,19 +275,19 @@ export function buildHumanSummary(database) {
   const topProduct = getTopProducts(database, 1)[0]
 
   const lines = [
-    `Hari ini ada ${metrics.transactionCountToday} transaksi.`,
-    `Total penjualan ${formatRupiah(metrics.salesToday)}.`,
+    `There are ${metrics.transactionCountToday} transactions today.`,
+    `Total sales are ${formatRupiah(metrics.salesToday)}.`,
   ]
 
   paymentMethods.forEach((method) => {
-    lines.push(`Pembayaran ${method.label.toLowerCase()} ${formatRupiah(method.total)}.`)
+    lines.push(`${method.label} payments total ${formatRupiah(method.total)}.`)
   })
 
   if (topProduct) {
-    lines.push(`Barang paling laku adalah ${topProduct.productName}.`)
+    lines.push(`The best-selling product is ${topProduct.productName}.`)
   }
 
-  lines.push(`Ada ${metrics.lowStockCount} produk yang stoknya hampir habis.`)
+  lines.push(`${metrics.lowStockCount} products are running low on stock.`)
 
   return lines
 }

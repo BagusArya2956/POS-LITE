@@ -3,9 +3,7 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ['"Plus Jakarta Sans"', '"Segoe UI"', 'sans-serif'],
-      },
+      fontFamily: { sans: ['"Geist Variable"', '"Segoe UI"', 'sans-serif'] },
     },
   },
   plugins: [],

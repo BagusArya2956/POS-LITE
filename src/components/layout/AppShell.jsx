@@ -24,31 +24,31 @@ import ToastStack from '../ui/ToastStack.jsx'
 const pageTitles = {
   '/dashboard': {
     title: 'Dashboard',
-    subtitle: 'Pantau penjualan, stok, dan transaksi terbaru.',
+    subtitle: 'Monitor sales, inventory, and recent transactions.',
   },
   '/kasir': {
-    title: 'Kasir',
-    subtitle: 'Layani transaksi dengan cepat dari satu layar.',
+    title: 'POS',
+    subtitle: 'Process transactions quickly from a single screen.',
   },
   '/produk': {
-    title: 'Produk',
-    subtitle: 'Kelola katalog, harga, dan status produk toko.',
+    title: 'Products',
+    subtitle: 'Manage your store catalog, pricing, and product status.',
   },
   '/stok': {
-    title: 'Stok',
-    subtitle: 'Pantau ketersediaan dan riwayat perubahan stok.',
+    title: 'Inventory',
+    subtitle: 'Monitor inventory availability and adjustment history.',
   },
   '/transaksi': {
-    title: 'Transaksi',
-    subtitle: 'Lihat histori transaksi, struk, dan pembatalan.',
+    title: 'Transactions',
+    subtitle: 'View transaction history, receipts, and cancellations.',
   },
   '/laporan': {
-    title: 'Laporan',
-    subtitle: 'Ringkasan performa bisnis Anda hari ini.',
+    title: 'Reports',
+    subtitle: 'Review revenue, profit, products, and payment performance.',
   },
   '/pengaturan': {
-    title: 'Pengaturan',
-    subtitle: 'Kelola preferensi toko, struk, dan sistem operasional.',
+    title: 'Settings',
+    subtitle: 'Manage store preferences, receipts, and operations.',
   },
 }
 const SUPPORT_WHATSAPP_NUMBER = '081353823867'
@@ -65,7 +65,7 @@ function AppShell() {
   const activePaymentCount = Object.values(storeSettings?.paymentMethods || {}).filter(Boolean).length
   const supportLink = buildWhatsAppLink(
     SUPPORT_WHATSAPP_NUMBER,
-    'Halo, saya butuh bantuan menggunakan VIGO POS.',
+    'Hello, I need help using VIGO POS.',
   )
 
   const notificationItems = useMemo(() => {
@@ -75,9 +75,9 @@ function AppShell() {
       items.push({
         id: 'empty-products',
         tone: 'info',
-        title: 'Katalog masih kosong',
-        description: 'Tambahkan produk pertama agar kasir bisa mulai dipakai.',
-        actionLabel: 'Buka Produk',
+        title: 'Your catalog is empty',
+        description: 'Add your first product to start using the POS.',
+        actionLabel: 'Open Products',
         href: '/produk',
       })
     }
@@ -86,9 +86,9 @@ function AppShell() {
       items.push({
         id: 'low-stock',
         tone: 'warning',
-        title: `Ada ${metrics.lowStockCount} stok perlu dicek`,
-        description: 'Beberapa item sudah mencapai batas minimum stok.',
-        actionLabel: 'Lihat Stok',
+        title: `${metrics.lowStockCount} inventory ${metrics.lowStockCount === 1 ? 'item needs' : 'items need'} attention`,
+        description: 'Some items have reached their minimum stock level.',
+        actionLabel: 'View Inventory',
         href: '/stok',
       })
     }
@@ -97,9 +97,9 @@ function AppShell() {
       items.push({
         id: 'no-sales-today',
         tone: 'info',
-        title: 'Belum ada transaksi hari ini',
-        description: 'Coba cek halaman kasir untuk mulai transaksi pertama hari ini.',
-        actionLabel: 'Buka Kasir',
+        title: 'No transactions yet today',
+        description: 'Open the POS to start your first transaction today.',
+        actionLabel: 'Open POS',
         href: '/kasir',
       })
     }
@@ -108,9 +108,9 @@ function AppShell() {
       items.push({
         id: 'incomplete-profile',
         tone: 'warning',
-        title: 'Profil toko belum lengkap',
-        description: 'Lengkapi alamat dan WhatsApp agar struk dan bantuan lebih siap dipakai.',
-        actionLabel: 'Buka Pengaturan',
+        title: 'Store profile is incomplete',
+        description: 'Add your address and WhatsApp number to complete receipts and support details.',
+        actionLabel: 'Open Settings',
         href: '/pengaturan',
       })
     }
@@ -119,9 +119,9 @@ function AppShell() {
       items.push({
         id: 'payment-methods',
         tone: 'info',
-        title: 'Metode pembayaran masih terbatas',
-        description: 'Aktifkan lebih dari satu metode agar kasir lebih fleksibel.',
-        actionLabel: 'Atur Pembayaran',
+        title: 'Payment options are limited',
+        description: 'Enable more than one payment method for greater flexibility.',
+        actionLabel: 'Manage Payments',
         href: '/pengaturan',
       })
     }
@@ -130,8 +130,8 @@ function AppShell() {
       items.push({
         id: 'all-good',
         tone: 'success',
-        title: 'Semua terlihat rapi',
-        description: 'Tidak ada catatan penting saat ini. Operasional toko siap berjalan.',
+        title: 'Everything looks good',
+        description: 'There are no important alerts. Your store is ready to operate.',
         actionLabel: '',
         href: '',
       })
@@ -153,7 +153,7 @@ function AppShell() {
 
   function openSupportChat() {
     window.open(supportLink, '_blank', 'noopener,noreferrer')
-    notify('WhatsApp bantuan dibuka', 'Anda akan diarahkan ke nomor support yang sudah ditentukan.', 'info')
+    notify('WhatsApp support opened', 'You will be redirected to the configured support number.', 'info')
   }
 
   function goToPage(path, target = 'notifications') {
@@ -205,7 +205,7 @@ function AppShell() {
                 <CircleHelp className="h-5 w-5" />
               </button>
               <Badge tone="green" className="px-4 py-2 text-sm">
-                Toko Buka
+                Store Open
               </Badge>
               <button
                 type="button"
@@ -216,7 +216,7 @@ function AppShell() {
               </button>
               <Button variant="secondary" size="sm" onClick={logout}>
                 <LogOut className="h-4 w-4" />
-                Keluar
+                Log out
               </Button>
             </div>
           </div>
@@ -230,7 +230,7 @@ function AppShell() {
       <Modal
         open={notificationsOpen}
         onClose={() => setNotificationsOpen(false)}
-        title="Notifikasi Operasional"
+        title="Operational Notifications"
         className="max-w-2xl"
       >
         <div className="space-y-4">
@@ -268,27 +268,27 @@ function AppShell() {
       <Modal
         open={helpOpen}
         onClose={() => setHelpOpen(false)}
-        title="Pusat Bantuan"
+        title="Help Center"
         className="max-w-3xl"
       >
         <div className="space-y-6">
           <div className="rounded-3xl border border-blue-200 bg-blue-50 p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-lg font-bold text-slate-900">Butuh bantuan cepat?</p>
+                <p className="text-lg font-bold text-slate-900">Need quick help?</p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Tombol ini akan membuka WhatsApp bantuan ke nomor support yang sudah ditentukan.
+                  This button opens a WhatsApp chat with the configured support number.
                 </p>
               </div>
               <Button onClick={openSupportChat}>
                 <MessageCircleMore className="h-4 w-4" />
-                Hubungi via WhatsApp
+                Contact via WhatsApp
               </Button>
             </div>
           </div>
 
           <div>
-            <h3 className="text-lg font-bold text-slate-900">Isi bantuan yang saya sarankan</h3>
+            <h3 className="text-lg font-bold text-slate-900">Recommended Help Topics</h3>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <button
                 type="button"
@@ -296,9 +296,9 @@ function AppShell() {
                 className="rounded-3xl border border-slate-200 p-4 text-left transition hover:border-blue-200 hover:bg-slate-50"
               >
                 <PackagePlus className="h-6 w-6 text-blue-700" />
-                <p className="mt-3 font-semibold text-slate-900">Tambah produk pertama</p>
+                <p className="mt-3 font-semibold text-slate-900">Add your first product</p>
                 <p className="mt-1 text-sm text-slate-500">
-                  Cocok untuk pengguna baru yang masih menyiapkan katalog.
+                  Ideal for new users preparing their catalog.
                 </p>
               </button>
               <button
@@ -307,9 +307,9 @@ function AppShell() {
                 className="rounded-3xl border border-slate-200 p-4 text-left transition hover:border-blue-200 hover:bg-slate-50"
               >
                 <ReceiptText className="h-6 w-6 text-blue-700" />
-                <p className="mt-3 font-semibold text-slate-900">Mulai transaksi</p>
+                <p className="mt-3 font-semibold text-slate-900">Start a transaction</p>
                 <p className="mt-1 text-sm text-slate-500">
-                  Panduan cepat untuk memilih produk dan menyelesaikan pembayaran.
+                  A quick guide to selecting products and completing payment.
                 </p>
               </button>
               <button
@@ -318,9 +318,9 @@ function AppShell() {
                 className="rounded-3xl border border-slate-200 p-4 text-left transition hover:border-blue-200 hover:bg-slate-50"
               >
                 <Download className="h-6 w-6 text-blue-700" />
-                <p className="mt-3 font-semibold text-slate-900">Backup dan restore</p>
+                <p className="mt-3 font-semibold text-slate-900">Backup and restore</p>
                 <p className="mt-1 text-sm text-slate-500">
-                  Simpan cadangan data dan pulihkan jika Anda pindah perangkat.
+                  Save a data backup and restore it when moving to another device.
                 </p>
               </button>
               <button
@@ -329,9 +329,9 @@ function AppShell() {
                 className="rounded-3xl border border-slate-200 p-4 text-left transition hover:border-blue-200 hover:bg-slate-50"
               >
                 <Settings2 className="h-6 w-6 text-blue-700" />
-                <p className="mt-3 font-semibold text-slate-900">Atur toko dan pembayaran</p>
+                <p className="mt-3 font-semibold text-slate-900">Manage store and payments</p>
                 <p className="mt-1 text-sm text-slate-500">
-                  Lengkapi profil toko, PIN, metode pembayaran, dan pengaturan struk.
+                  Complete your store profile, PIN, payment methods, and receipt settings.
                 </p>
               </button>
             </div>
@@ -341,11 +341,11 @@ function AppShell() {
             <div className="flex items-start gap-3">
               <TriangleAlert className="mt-0.5 h-5 w-5 text-amber-600" />
               <div>
-                <p className="font-semibold text-slate-900">Saran pengisian yang paling berguna</p>
+                <p className="font-semibold text-slate-900">Most useful recommendations</p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Untuk ikon lonceng, isi terbaik adalah notifikasi stok menipis, transaksi hari ini,
-                  katalog kosong, dan profil toko yang belum lengkap. Untuk ikon bantuan, isi terbaik
-                  adalah tombol WhatsApp bantuan, panduan langkah awal, dan shortcut ke Pengaturan.
+                  Use the bell for low-stock alerts, today's transactions,
+                  an empty catalog, and incomplete store profiles. Use the help icon
+                  for WhatsApp support, getting-started guides, and Settings shortcuts.
                 </p>
               </div>
             </div>
